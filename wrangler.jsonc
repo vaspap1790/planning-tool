@@ -1,0 +1,10 @@
+{
+  // Cloudflare Workers static-assets config: serve the Vite build (./dist).
+  "name": "planning-tool",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./dist",
+    // Serve index.html for unknown paths (safe for our hash-routed SPA).
+    "not_found_handling": "single-page-application"
+  }
+}
