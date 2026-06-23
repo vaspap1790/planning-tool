@@ -1,8 +1,9 @@
 # Release Planner
 
-A two-tab planning tool (Initiatives + auto-generated Timeline) with a split view.
-Prototype stage: data persists to the browser (localStorage). Next step is wiring
-Supabase for a shared link + live multi-user sync.
+A two-tab planning tool (Initiatives + auto-generated Timeline) with a split view,
+shared and live-synced across users.
+
+**Live:** https://planning-tool.vaspap1790.workers.dev
 
 ## Run
 
@@ -26,6 +27,18 @@ and the sync effects in `src/state/store.tsx`. localStorage remains an instant c
 Single-row design = last-write-wins on simultaneous edits; fine for a small team.
 
 Deep links: `#initiatives`, `#timeline`, `#split`, `#config` (applied on initial load).
+
+## Deploy
+
+Hosted on **Cloudflare Workers** (static assets) via `wrangler.jsonc` (serves `./dist`).
+Connected to GitHub, so **every push to `main` auto-builds and redeploys**:
+
+- Build command: `npm run build`
+- Deploy command: `npx wrangler deploy`
+- Build variables (set in the Cloudflare dashboard, not in git):
+  `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `NODE_VERSION=20`
+
+Note: Supabase free projects pause after ~7 days of zero activity (one click to wake).
 
 ## What's implemented
 
@@ -54,9 +67,11 @@ All delete actions are guarded by a confirmation modal.
 
 - `src/types.ts` — domain model.
 - `src/lib/dates.ts` — pure, testable date/sprint/timeline logic.
-- `src/lib/storage.ts` — `Store` interface (localStorage today; **swap for Supabase here**).
-- `src/state/store.tsx` — React context with immutable-update actions; persists on change.
-- `src/components/tab1`, `src/components/tab2` — UI.
+- `src/lib/storage.ts` — `Store` interface backing the localStorage instant cache.
+- `src/lib/supabase.ts` / `src/lib/remoteStore.ts` — shared source of truth + realtime.
+- `src/state/store.tsx` — React context with immutable-update actions; localStorage cache +
+  debounced Supabase sync with echo-suppression.
+- `src/components/tab1`, `src/components/tab2`, `src/components/config` — UI.
 
 ## Rules
 
