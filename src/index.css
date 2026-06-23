@@ -1,0 +1,50 @@
+:root {
+  /* Deutsche Telekom Magenta palette */
+  --bg: #f2f2f4;
+  --surface: #ffffff;
+  --surface-2: #faf7f9;
+  --border: #e7e3e7;
+  --border-strong: #cfc7cf;
+  --text: #1a1a1a;
+  --muted: #8a8290;
+  --accent: #e20074; /* Telekom Magenta */
+  --accent-strong: #b8005e;
+  --accent-soft: #ffe3f1;
+  --accent-tint: #fdf4f9; /* faint magenta wash for rows */
+  --grid-line: rgba(226, 0, 116, 0.16);
+  --ink: #262626; /* near-black brand neutral */
+  --warn-yellow: #ffb81c;
+  --warn-yellow-bg: #fff5da;
+  --warn-red: #d7373f;
+  --warn-red-bg: #fde8e9;
+  --radius: 10px;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow: 0 4px 16px rgba(16, 24, 40, 0.08);
+  --sans: "Inter", system-ui, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text);
+}
