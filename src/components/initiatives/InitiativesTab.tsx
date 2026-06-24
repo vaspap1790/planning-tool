@@ -102,15 +102,15 @@ export function InitiativesTab() {
                   </button>
                 </th>
                 <th className="col-initiative">Initiative</th>
-                <th>Estimation (Sprints)</th>
-                <th className="col-readiness">Dev Readiness</th>
-                <th>Time left (Sprints)</th>
                 <th className="col-components">Components</th>
+                <th className="col-readiness">Dev Readiness</th>
+                <th>Estimation (Sprints)</th>
                 <th>
                   <button className="th-sort" onClick={() => toggleSort("startDate")}>
                     Start Date{sortArrow("startDate")}
                   </button>
                 </th>
+                <th>Time left (Sprints)</th>
                 {activeComponents.map((c) => (
                   <th key={c.id} className="col-target">
                     Target Dates – {c.name}
@@ -156,32 +156,6 @@ export function InitiativesTab() {
                     </div>
                   </td>
 
-                  <td className="center">
-                    <input
-                      className="cell-input num"
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={i.estimationSprints}
-                      onChange={(e) => setEstimation(i, e.target.value)}
-                    />
-                  </td>
-
-                  <td className="col-readiness">
-                    <DevReadinessCell
-                      initiativeId={i.id}
-                      devReadiness={i.devReadiness}
-                    />
-                  </td>
-
-                  <td className="center computed">
-                    {timeLeftSprints(
-                      i.startDate,
-                      i.estimationSprints,
-                      state.config.sprintWeeks
-                    )}
-                  </td>
-
                   <td className="col-components">
                     {state.components.map((c) => (
                       <label key={c.id} className="check-row">
@@ -195,6 +169,24 @@ export function InitiativesTab() {
                     ))}
                   </td>
 
+                  <td className="col-readiness">
+                    <DevReadinessCell
+                      initiativeId={i.id}
+                      devReadiness={i.devReadiness}
+                    />
+                  </td>
+
+                  <td className="center">
+                    <input
+                      className="cell-input num"
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={i.estimationSprints}
+                      onChange={(e) => setEstimation(i, e.target.value)}
+                    />
+                  </td>
+
                   <td className="center">
                     <input
                       className={`cell-input ${i.startDate ? "" : "invalid"}`}
@@ -204,6 +196,14 @@ export function InitiativesTab() {
                         updateInitiative(i.id, { startDate: e.target.value })
                       }
                     />
+                  </td>
+
+                  <td className="center computed">
+                    {timeLeftSprints(
+                      i.startDate,
+                      i.estimationSprints,
+                      state.config.sprintWeeks
+                    )}
                   </td>
 
                   {activeComponents.map((c) => (
