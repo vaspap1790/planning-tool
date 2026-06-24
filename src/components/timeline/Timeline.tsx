@@ -1,7 +1,9 @@
 import { useMemo } from "react";
 import { useApp } from "../../state/store";
+import { TIMELINE_START_OPTIONS } from "../../lib/timelineStart";
 import {
   buildTimeline,
+  diffDays,
   formatDisplay,
   initiativeLastDay,
   todayISO,
@@ -21,7 +23,7 @@ interface Box {
 }
 
 export function Timeline() {
-  const { state } = useApp();
+  const { state, updateConfig } = useApp();
   const { sprintWeeks, timelineStart } = state.config;
   const timeline = useMemo(
     () =>
@@ -32,6 +34,23 @@ export function Timeline() {
     [state.quarters, sprintWeeks, timelineStart]
   );
   const n = timeline.weeks.length;
+
+  // Fractional column position of "today" so a marker can land precisely within
+  // the current week. Null when today falls outside the generated grid.
+  const todayOffset = useMemo(() => {
+    const weeks = timeline.weeks;
+    if (weeks.length === 0) return null;
+    const today = todayISO();
+    if (diffDays(today, weeks[0].start) > 0) return null; // before the grid
+    const last = weeks[weeks.length - 1];
+    if (diffDays(last.end, today) > 0) return null; // after the grid
+    for (const w of weeks) {
+      if (diffDays(today, w.start) <= 0 && diffDays(w.end, today) <= 0) {
+        return w.index + diffDays(w.start, today) / 7; // 0..6 days into the week
+      }
+    }
+    return null;
+  }, [timeline]);
 
   if (n === 0) {
     return <p className="muted pad">Add a quarter above to generate the timeline.</p>;
@@ -44,9 +63,23 @@ export function Timeline() {
     <section className="panel timeline-panel">
       <header className="panel-head">
         <h2>Timeline</h2>
-        <span className="muted">
-          Auto-generated · 1 sprint = {sprintWeeks} week{sprintWeeks === 1 ? "" : "s"} ·
-          start: {timelineStart === "current" ? "current date" : "quarter start"}
+        <div className="timeline-start-control">
+          <span className="muted small">Start</span>
+          <div className="segmented">
+            {TIMELINE_START_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                className={`seg ${timelineStart === opt.value ? "active" : ""}`}
+                onClick={() => updateConfig({ timelineStart: opt.value })}
+                title={opt.hint}
+              >
+                {opt.shortLabel}
+              </button>
+            ))}
+          </div>
+        </div>
+        <span className="muted timeline-hint">
+          Auto-generated · 1 sprint = {sprintWeeks} week{sprintWeeks === 1 ? "" : "s"}
         </span>
       </header>
 
@@ -152,6 +185,14 @@ export function Timeline() {
               </div>
             );
           })}
+
+          {todayOffset !== null && (
+            <div
+              className="tl-today"
+              style={{ left: `calc(${todayOffset} * var(--week-w))` }}
+              title={`Today · ${formatDisplay(todayISO())}`}
+            />
+          )}
         </div>
       </div>
     </section>

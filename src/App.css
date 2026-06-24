@@ -218,6 +218,8 @@
   gap: 8px;
 }
 .segmented {
+  display: inline-flex;
+  align-items: center;
   background: var(--bg);
   border-radius: 9px;
   padding: 3px;
@@ -270,8 +272,17 @@
 .panel-head h2 {
   font-size: 15px;
 }
-.panel-head .muted {
+.timeline-start-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.timeline-hint {
   margin-left: auto;
+}
+.timeline-start-control .seg {
+  padding: 5px 11px;
+  font-size: 12px;
 }
 .muted {
   color: var(--muted);
@@ -554,9 +565,23 @@
 }
 .timeline-grid {
   --week-w: 132px;
+  position: relative;
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--week-w));
   min-width: min-content;
+}
+
+/* "Today" marker — a translucent vertical line placed precisely within the
+   current week. Kept low-opacity so it never obscures cell text or boxes. */
+.tl-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--today-line);
+  opacity: 0.22;
+  pointer-events: none;
+  z-index: 3;
 }
 .tl-cell {
   border-right: 1px solid var(--grid-line);

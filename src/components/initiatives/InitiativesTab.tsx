@@ -28,7 +28,7 @@ export function InitiativesTab() {
     <div className="initiatives-tab">
       <ComponentsList />
 
-      <section className="panel">
+      <section className="panel initiatives-panel">
         <header className="panel-head">
           <h2>Initiatives</h2>
           <button className="btn" onClick={addInitiative}>

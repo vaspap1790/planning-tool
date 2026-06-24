@@ -1,18 +1,5 @@
 import { useApp } from "../../state/store";
-import type { TimelineStart } from "../../types";
-
-const TIMELINE_OPTIONS: { value: TimelineStart; label: string; hint: string }[] = [
-  {
-    value: "quarter",
-    label: "Start of quarter",
-    hint: "Timeline shows every week from each quarter's start date.",
-  },
-  {
-    value: "current",
-    label: "Current date",
-    hint: "Timeline clips past weeks and begins at today.",
-  },
-];
+import { TIMELINE_START_OPTIONS } from "../../lib/timelineStart";
 
 export function ConfigTab() {
   const { state, updateConfig } = useApp();
@@ -53,10 +40,10 @@ export function ConfigTab() {
         <div className="config-row">
           <div className="config-label">
             <strong>Timeline start</strong>
-            <span className="muted">Where the Tab 2 grid begins.</span>
+            <span className="muted">Where the Timeline grid begins.</span>
           </div>
           <div className="config-control segmented">
-            {TIMELINE_OPTIONS.map((opt) => (
+            {TIMELINE_START_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
                 className={`seg ${timelineStart === opt.value ? "active" : ""}`}
