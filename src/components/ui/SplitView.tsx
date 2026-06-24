@@ -20,11 +20,11 @@ export function SplitView({ top, bottom }: { top: ReactNode; bottom: ReactNode }
   const [dragging, setDragging] = useState(false);
 
   // On entering Split view, frame each pane on the start of its data:
-  // the Initiatives panel incl. its title (top) and the Timeline grid (bottom).
+  // the Initiatives panel (top) and the Timeline panel (bottom), each incl. title.
   useEffect(() => {
     const id = requestAnimationFrame(() => {
       scrollPaneToChild(topPaneRef.current, ".initiatives-panel");
-      scrollPaneToChild(bottomPaneRef.current, ".timeline-scroll");
+      scrollPaneToChild(bottomPaneRef.current, ".timeline-panel");
     });
     return () => cancelAnimationFrame(id);
   }, []);

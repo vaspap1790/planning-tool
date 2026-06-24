@@ -170,6 +170,21 @@
   max-width: calc(100vw - 32px);
   animation: pop-in 0.14s ease-out;
 }
+/* Roomier variant for detail dialogs — taller, with actions pinned to the base. */
+.modal-lg {
+  display: flex;
+  flex-direction: column;
+  width: 420px;
+  min-height: 340px;
+  padding: 26px 26px 22px;
+}
+.modal-lg .modal-title {
+  margin-bottom: 18px;
+}
+.modal-lg .modal-actions {
+  margin-top: auto;
+  padding-top: 16px;
+}
 .modal-title {
   font-size: 16px;
   font-weight: 600;
@@ -297,6 +312,10 @@
 
 /* ---------- Buttons / inputs ---------- */
 .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   border: 1px solid var(--accent);
   background: var(--accent);
   color: #fff;
@@ -307,6 +326,7 @@
   white-space: nowrap;
   flex-shrink: 0;
   cursor: pointer;
+  text-decoration: none;
   transition: filter 0.15s;
 }
 .btn:hover {
@@ -322,13 +342,16 @@
   border-color: var(--border-strong);
 }
 .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
-  padding: 2px 5px;
+  padding: 5px;
   border-radius: 6px;
 }
 .icon-btn:hover {
@@ -368,38 +391,223 @@
 }
 
 /* ---------- Components chip list ---------- */
-.chip-list {
+.component-list {
   list-style: none;
   margin: 0 0 12px;
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
-.chip {
+.component-item {
   display: flex;
-  align-items: center;
-  gap: 2px;
+  flex-direction: column;
+  gap: 6px;
+  width: 240px;
   background: var(--surface-2);
   border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 2px 4px 2px 10px;
+  border-radius: 9px;
+  padding: 8px 8px 8px 10px;
+  position: relative;
 }
-.chip-input {
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  font-weight: 500;
-  width: 78px;
-  color: var(--text);
+.component-name {
+  padding-right: 22px; /* room for the delete button */
 }
-.chip-input:focus {
-  outline: none;
+.component-link-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.component-del {
+  position: absolute;
+  top: 6px;
+  right: 6px;
 }
 .add-row {
   display: flex;
   gap: 8px;
   max-width: 360px;
+}
+
+/* ---------- Search inputs ---------- */
+.search-input {
+  width: auto;
+  min-width: 200px;
+  max-width: 260px;
+}
+.timeline-search {
+  min-width: 180px;
+  max-width: 220px;
+}
+
+/* ---------- Sortable headers ---------- */
+.th-sort {
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+.th-sort:hover {
+  text-decoration: underline;
+}
+
+/* ---------- Priority column ---------- */
+.col-priority {
+  width: 56px;
+}
+.priority-select {
+  position: relative;
+  display: inline-block;
+}
+.priority-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+}
+.priority-trigger:hover {
+  background: var(--bg);
+  border-color: var(--border);
+}
+.priority-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+  width: 184px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  box-shadow: var(--shadow);
+}
+.priority-option {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 7px 9px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+.priority-option:hover {
+  background: var(--bg);
+}
+.priority-option.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ---------- Dev Readiness column ---------- */
+.col-readiness {
+  min-width: 250px;
+}
+.dev-readiness {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+  background: var(--surface-2);
+}
+/* Overall "Dev Ready" cue: just the cell border tints green when all complete. */
+.dev-readiness.ready-green {
+  border-color: var(--ok-green);
+}
+.readiness-row {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  grid-template-areas: "label status" "label eta";
+  align-items: center;
+  column-gap: 6px;
+  row-gap: 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  padding: 6px 7px;
+  background: var(--surface);
+}
+/* Per-input outline, independent of the others. */
+.readiness-row.ready-green {
+  border-color: var(--ok-green);
+  background: var(--ok-green-bg);
+}
+.readiness-row.ready-yellow {
+  border-color: var(--warn-yellow);
+  background: var(--warn-yellow-bg);
+}
+.readiness-row.ready-red {
+  border-color: var(--warn-red);
+  background: var(--warn-red-bg);
+}
+.readiness-label {
+  grid-area: label;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.readiness-status {
+  grid-area: status;
+}
+.readiness-eta {
+  grid-area: eta;
+}
+.readiness-status,
+.readiness-eta {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 5px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  width: 100%;
+}
+.readiness-eta:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Modal detail list ---------- */
+.detail-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 12px 18px;
+  margin: 4px 0 18px;
+}
+.detail-list dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.detail-list dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: none;
 }
 
 /* ---------- Tables ---------- */
@@ -648,7 +856,10 @@
 .tl-box {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 1px;
+  width: 100%;
+  text-align: left;
   background: var(--surface);
   border: 1.5px solid var(--border-strong);
   border-radius: 6px;
@@ -656,6 +867,18 @@
   font-size: 10.5px;
   line-height: 1.25;
   box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  transition: box-shadow 0.12s, transform 0.12s;
+}
+.tl-box:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+.tl-box:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 .tl-box strong {
   font-size: 11px;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { AppProvider } from "./state/store";
+import { SearchProvider } from "./state/search";
 import { ConfirmProvider } from "./components/ui/ConfirmDialog";
 import { SplitView } from "./components/ui/SplitView";
 import { InitiativesTab } from "./components/initiatives/InitiativesTab";
@@ -48,6 +49,7 @@ export default function App() {
   return (
     <AppProvider>
       <ConfirmProvider>
+      <SearchProvider view={view}>
       <div className="app">
         <header className="app-bar">
           <div className="bar-left">
@@ -172,6 +174,7 @@ export default function App() {
           )}
         </main>
       </div>
+      </SearchProvider>
       </ConfirmProvider>
     </AppProvider>
   );

@@ -9,17 +9,27 @@ export function seed(): AppState {
 
   return {
     components: [
-      { id: MAPI, name: "MAPI" },
-      { id: MAVI, name: "MaVi" },
-      { id: MMKC, name: "MMKC" },
-      { id: ONEAPP, name: "OneApp" },
+      { id: MAPI, name: "MAPI", releaseCalendarLink: "" },
+      {
+        id: MAVI,
+        name: "MaVi",
+        releaseCalendarLink: "https://confluence.example.com/mavi/release-calendar",
+      },
+      { id: MMKC, name: "MMKC", releaseCalendarLink: "" },
+      { id: ONEAPP, name: "OneApp", releaseCalendarLink: "" },
     ],
     initiatives: [
       {
         id: "i1",
         name: "Initiative 1",
         link: "",
+        priority: "blocker",
         estimationSprints: 3,
+        devReadiness: {
+          architecture: { status: "provided", eta: "" },
+          analytics: { status: "provided", eta: "" },
+          designs: { status: "na", eta: "" },
+        },
         startDate: "2026-06-09",
         checkedComponents: { [MAVI]: true, [MMKC]: true },
         targetDates: {
@@ -34,7 +44,13 @@ export function seed(): AppState {
         id: "i2",
         name: "Initiative 2",
         link: "",
+        priority: "major",
         estimationSprints: 2,
+        devReadiness: {
+          architecture: { status: "not_provided", eta: "2026-06-26" },
+          analytics: { status: "na", eta: "" },
+          designs: { status: "provided", eta: "" },
+        },
         startDate: "2026-07-07",
         checkedComponents: { [MAVI]: true, [MMKC]: true },
         targetDates: {
@@ -46,7 +62,13 @@ export function seed(): AppState {
         id: "i3",
         name: "Initiative 3",
         link: "",
+        priority: "minor",
         estimationSprints: 3,
+        devReadiness: {
+          architecture: { status: "not_provided", eta: "" },
+          analytics: { status: "not_provided", eta: "" },
+          designs: { status: "not_provided", eta: "" },
+        },
         startDate: "2026-07-07",
         checkedComponents: { [MAVI]: true, [MMKC]: true },
         targetDates: {

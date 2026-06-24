@@ -1,5 +1,6 @@
 import { useApp } from "../../state/store";
 import { useConfirm } from "../ui/ConfirmDialog";
+import { TrashIcon } from "../ui/TrashIcon";
 
 export function QuarterTable() {
   const { state, addQuarter, updateQuarter, deleteQuarter } = useApp();
@@ -78,7 +79,7 @@ export function QuarterTable() {
                   title="Delete quarter"
                   onClick={() => remove(q.id, `Q${q.quarter} ${q.year}`)}
                 >
-                  🗑
+                  <TrashIcon />
                 </button>
               </td>
             </tr>

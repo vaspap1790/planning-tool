@@ -15,12 +15,16 @@ import type {
   AppState,
   Component,
   Config,
+  DevReadiness,
   ID,
   Initiative,
   Quarter,
+  ReadinessItem,
   TargetDateEntry,
 } from "../types";
 import { localStore, newId, type Store } from "../lib/storage";
+import { DEFAULT_PRIORITY } from "../lib/priority";
+import { defaultDevReadiness } from "../lib/readiness";
 import { SUPABASE_ENABLED } from "../lib/supabase";
 import {
   fetchRemoteState,
@@ -31,13 +35,18 @@ import {
 interface Actions {
   // Components list
   addComponent(name: string): void;
-  updateComponent(id: ID, name: string): void;
+  updateComponent(id: ID, patch: Partial<Component>): void;
   deleteComponent(id: ID): void;
   // Initiatives
   addInitiative(): void;
   updateInitiative(id: ID, patch: Partial<Initiative>): void;
   deleteInitiative(id: ID): void;
   toggleComponent(initiativeId: ID, componentId: ID): void;
+  updateReadiness(
+    initiativeId: ID,
+    key: keyof DevReadiness,
+    patch: Partial<ReadinessItem>
+  ): void;
   // Target dates
   addTargetDate(initiativeId: ID, componentId: ID): void;
   updateTargetDate(
@@ -144,12 +153,12 @@ export function AppProvider({
       addComponent: (name) =>
         setState((s) => ({
           ...s,
-          components: [...s.components, { id: newId(), name }],
+          components: [...s.components, { id: newId(), name, releaseCalendarLink: "" }],
         })),
-      updateComponent: (id, name) =>
+      updateComponent: (id, patch) =>
         setState((s) => ({
           ...s,
-          components: s.components.map((c) => (c.id === id ? { ...c, name } : c)),
+          components: s.components.map((c) => (c.id === id ? { ...c, ...patch } : c)),
         })),
       deleteComponent: (id) =>
         setState((s) => ({
@@ -171,7 +180,9 @@ export function AppProvider({
               id: newId(),
               name: "New initiative",
               link: "",
+              priority: DEFAULT_PRIORITY,
               estimationSprints: 1,
+              devReadiness: defaultDevReadiness(),
               startDate: new Date().toISOString().slice(0, 10),
               checkedComponents: {},
               targetDates: {},
@@ -196,6 +207,14 @@ export function AppProvider({
           }
           return next;
         }),
+      updateReadiness: (initiativeId, key, patch) =>
+        mapInitiative(initiativeId, (i) => ({
+          ...i,
+          devReadiness: {
+            ...i.devReadiness,
+            [key]: { ...i.devReadiness[key], ...patch },
+          },
+        })),
 
       addTargetDate: (initiativeId, componentId) =>
         mapInitiative(initiativeId, (i) => ({

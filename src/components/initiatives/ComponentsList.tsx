@@ -27,17 +27,39 @@ export function ComponentsList() {
       <header className="panel-head">
         <h2>Components</h2>
       </header>
-      <ul className="chip-list">
+      <ul className="component-list">
         {state.components.map((c) => (
-          <li key={c.id} className="chip">
+          <li key={c.id} className="component-item">
             <input
-              className="chip-input"
+              className="cell-input strong component-name"
               value={c.name}
-              onChange={(e) => updateComponent(c.id, e.target.value)}
+              onChange={(e) => updateComponent(c.id, { name: e.target.value })}
               aria-label="Component name"
             />
+            <div className="component-link-row">
+              <input
+                className="cell-input link-input"
+                value={c.releaseCalendarLink}
+                placeholder="Release calendar link (optional)"
+                onChange={(e) =>
+                  updateComponent(c.id, { releaseCalendarLink: e.target.value })
+                }
+                aria-label="Release calendar link"
+              />
+              {c.releaseCalendarLink && (
+                <a
+                  className="open-link"
+                  href={c.releaseCalendarLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  title="Open release calendar"
+                >
+                  ↗
+                </a>
+              )}
+            </div>
             <button
-              className="icon-btn"
+              className="icon-btn component-del"
               title="Delete component"
               onClick={() => remove(c.id, c.name)}
             >

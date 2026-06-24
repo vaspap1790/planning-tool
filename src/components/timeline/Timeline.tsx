@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useApp } from "../../state/store";
+import { useSearch } from "../../state/search";
 import { TIMELINE_START_OPTIONS } from "../../lib/timelineStart";
 import {
   buildTimeline,
@@ -10,13 +11,16 @@ import {
   warningLevel,
   weekIndexForDate,
 } from "../../lib/dates";
+import { TargetDateModal, type TargetDateDetails } from "./TargetDateModal";
 
 // Vivid, distinct bar colors cycled per initiative (Telekom magenta leads).
 const BAR_COLORS = ["#E20074", "#7C3AED", "#00A6A6", "#FF8A00", "#2563EB", "#16A34A"];
 
 interface Box {
   col: number;
+  componentId: string;
   componentName: string;
+  initiativeName: string;
   date: string;
   releaseVersion: string;
   env: string;
@@ -25,6 +29,32 @@ interface Box {
 export function Timeline() {
   const { state, updateConfig } = useApp();
   const { sprintWeeks, timelineStart } = state.config;
+  const [search, setSearch] = useSearch("timeline");
+  const [selected, setSelected] = useState<TargetDateDetails | null>(null);
+
+  // Clear the filter every time this tab is entered (tab switch / split toggle remount).
+  useEffect(() => {
+    setSearch("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const initiatives = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q
+      ? state.initiatives.filter((i) => i.name.toLowerCase().includes(q))
+      : state.initiatives;
+  }, [state.initiatives, search]);
+
+  const openBox = (b: Box) =>
+    setSelected({
+      initiativeName: b.initiativeName,
+      componentName: b.componentName,
+      date: b.date,
+      releaseVersion: b.releaseVersion,
+      env: b.env,
+      releaseCalendarLink:
+        state.components.find((c) => c.id === b.componentId)?.releaseCalendarLink ?? "",
+    });
   const timeline = useMemo(
     () =>
       buildTimeline(state.quarters, {
@@ -78,6 +108,13 @@ export function Timeline() {
             ))}
           </div>
         </div>
+        <input
+          className="text-input search-input timeline-search"
+          type="search"
+          placeholder="Search initiatives…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <span className="muted timeline-hint">
           Auto-generated · 1 sprint = {sprintWeeks} week{sprintWeeks === 1 ? "" : "s"}
         </span>
@@ -121,7 +158,7 @@ export function Timeline() {
           ))}
 
           {/* Initiative rows */}
-          {state.initiatives.map((i, idx) => {
+          {initiatives.map((i) => {
             const lastDay = initiativeLastDay(
               i.startDate,
               i.estimationSprints,
@@ -129,7 +166,9 @@ export function Timeline() {
             );
             const startCol = weekIndexForDate(timeline.weeks, i.startDate);
             const endCol = weekIndexForDate(timeline.weeks, lastDay);
-            const color = BAR_COLORS[idx % BAR_COLORS.length];
+            // Stable color per initiative regardless of any active filter.
+            const color =
+              BAR_COLORS[state.initiatives.indexOf(i) % BAR_COLORS.length];
 
             const boxes: Box[] = [];
             for (const [componentId, checked] of Object.entries(i.checkedComponents)) {
@@ -137,7 +176,9 @@ export function Timeline() {
               for (const e of i.targetDates[componentId] ?? []) {
                 boxes.push({
                   col: weekIndexForDate(timeline.weeks, e.date),
+                  componentId,
                   componentName: componentName(componentId),
+                  initiativeName: i.name,
                   date: e.date,
                   releaseVersion: e.releaseVersion,
                   env: e.env,
@@ -173,12 +214,18 @@ export function Timeline() {
                     style={{ gridColumn: col + 1 }}
                   >
                     {group.map((b, bi) => (
-                      <div key={bi} className={`tl-box warn-${warningLevel(b.date)}`}>
+                      <button
+                        key={bi}
+                        type="button"
+                        className={`tl-box warn-${warningLevel(b.date)}`}
+                        onClick={() => openBox(b)}
+                        title="View details"
+                      >
                         <strong>{b.componentName}</strong>
                         <span>{formatDisplay(b.date)}</span>
                         {b.releaseVersion && <span>v{b.releaseVersion}</span>}
                         {b.env && <span className="tl-env">{b.env}</span>}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 ))}
@@ -195,6 +242,10 @@ export function Timeline() {
           )}
         </div>
       </div>
+
+      {selected && (
+        <TargetDateModal details={selected} onClose={() => setSelected(null)} />
+      )}
     </section>
   );
 }

@@ -3,10 +3,31 @@
 
 export type ID = string;
 
-/** A reusable component name (Tab 1 "Components" list). */
+/** A reusable component (Initiatives "Components" list). */
 export interface Component {
   id: ID;
   name: string;
+  /** Optional link to this component's release calendar (shown in the timeline modal). */
+  releaseCalendarLink: string;
+}
+
+/** JIRA-style initiative priority, highest → lowest. */
+export type Priority = "blocker" | "critical" | "major" | "minor" | "trivial";
+
+/** Whether a readiness input has been provided by the owning team. */
+export type ReadinessStatus = "provided" | "not_provided" | "na";
+
+/** One Dev-Readiness input (Architecture / Analytics / Designs). */
+export interface ReadinessItem {
+  status: ReadinessStatus;
+  eta: string; // ISO yyyy-mm-dd; "" when none / N/A
+}
+
+/** Dev-readiness signals an initiative needs before development can proceed. */
+export interface DevReadiness {
+  architecture: ReadinessItem;
+  analytics: ReadinessItem;
+  designs: ReadinessItem;
 }
 
 /** One target-date entry for a given component within an initiative. */
@@ -22,7 +43,9 @@ export interface Initiative {
   id: ID;
   name: string;
   link: string; // optional clickable link for the initiative name
+  priority: Priority;
   estimationSprints: number; // integer, sprints
+  devReadiness: DevReadiness;
   startDate: string; // ISO yyyy-mm-dd
   /** componentId -> checked */
   checkedComponents: Record<ID, boolean>;
