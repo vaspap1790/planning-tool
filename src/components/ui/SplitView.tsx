@@ -1,13 +1,33 @@
 // Vertically stacked panes with a draggable divider to resize their heights.
-import { useCallback, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 const MIN_RATIO = 0.15;
 const MAX_RATIO = 0.85;
 
+// Scroll a pane so the given child's top aligns with the pane's top.
+function scrollPaneToChild(pane: HTMLElement | null, selector: string) {
+  if (!pane) return;
+  const target = pane.querySelector(selector) as HTMLElement | null;
+  if (!target) return;
+  pane.scrollTop += target.getBoundingClientRect().top - pane.getBoundingClientRect().top;
+}
+
 export function SplitView({ top, bottom }: { top: ReactNode; bottom: ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const topPaneRef = useRef<HTMLDivElement>(null);
+  const bottomPaneRef = useRef<HTMLDivElement>(null);
   const [ratio, setRatio] = useState(0.5); // top pane share of height
   const [dragging, setDragging] = useState(false);
+
+  // On entering Split view, frame each pane on the start of its data:
+  // the Initiatives table header (top) and the Timeline grid (bottom).
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      scrollPaneToChild(topPaneRef.current, ".table-scroll");
+      scrollPaneToChild(bottomPaneRef.current, ".timeline-scroll");
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
 
   const onMouseDown = useCallback(() => {
     setDragging(true);
@@ -33,7 +53,11 @@ export function SplitView({ top, bottom }: { top: ReactNode; bottom: ReactNode }
       ref={containerRef}
       className={`split-container${dragging ? " dragging" : ""}`}
     >
-      <div className="split-pane" style={{ flex: `0 0 ${ratio * 100}%` }}>
+      <div
+        ref={topPaneRef}
+        className="split-pane"
+        style={{ flex: `0 0 ${ratio * 100}%` }}
+      >
         {top}
       </div>
       <div
@@ -45,7 +69,7 @@ export function SplitView({ top, bottom }: { top: ReactNode; bottom: ReactNode }
       >
         <span className="split-grip" />
       </div>
-      <div className="split-pane" style={{ flex: "1 1 0" }}>
+      <div ref={bottomPaneRef} className="split-pane" style={{ flex: "1 1 0" }}>
         {bottom}
       </div>
     </div>

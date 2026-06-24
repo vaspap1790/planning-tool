@@ -5,7 +5,7 @@ import { useConfirm } from "../ui/ConfirmDialog";
 import { ComponentsList } from "./ComponentsList";
 import { TargetDatesCell } from "./TargetDatesCell";
 
-export function Tab1() {
+export function InitiativesTab() {
   const { state, addInitiative, updateInitiative, deleteInitiative, toggleComponent } =
     useApp();
   const confirm = useConfirm();
@@ -25,7 +25,7 @@ export function Tab1() {
   };
 
   return (
-    <div className="tab1">
+    <div className="initiatives-tab">
       <ComponentsList />
 
       <section className="panel">

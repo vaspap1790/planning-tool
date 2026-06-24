@@ -26,7 +26,6 @@ export function ComponentsList() {
     <section className="panel components-panel">
       <header className="panel-head">
         <h2>Components</h2>
-        <span className="muted">Reusable list used by the table</span>
       </header>
       <ul className="chip-list">
         {state.components.map((c) => (

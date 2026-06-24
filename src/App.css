@@ -17,6 +17,11 @@
   z-index: 5;
 }
 
+.bar-left {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
 .brand {
   display: flex;
   align-items: center;
@@ -30,28 +35,40 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   background: var(--accent);
-  color: #fff;
-  border-radius: 5px;
-  font-size: 12px;
+  border-radius: 6px;
+  box-shadow: var(--shadow-sm);
 }
-.sync-badge {
-  margin-left: 8px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  padding: 2px 9px;
-  border-radius: 999px;
+
+/* Icon-only actions (theme toggle, Config) set apart on the far right. */
+.bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.sync-badge.live {
-  color: #137a3f;
-  background: #e3f6ec;
-}
-.sync-badge.local {
+.bar-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
   color: var(--muted);
-  background: var(--bg);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.bar-icon:hover {
+  color: var(--accent);
+  border-color: var(--border-strong);
+}
+.config-btn.active {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
 }
 
 .tabs {
@@ -62,6 +79,9 @@
   border-radius: 10px;
 }
 .tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   border: none;
   background: transparent;
   padding: 7px 16px;
@@ -71,6 +91,9 @@
   color: var(--muted);
   cursor: pointer;
   transition: all 0.15s;
+}
+.tab-icon {
+  flex-shrink: 0;
 }
 .tab:hover {
   color: var(--text);
@@ -270,6 +293,8 @@
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
   transition: filter 0.15s;
 }

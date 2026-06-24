@@ -23,7 +23,6 @@ export function ConfigTab() {
       <section className="panel config-panel">
         <header className="panel-head">
           <h2>Configuration</h2>
-          <span className="muted">Applied everywhere instantly</span>
         </header>
 
         <div className="config-row">

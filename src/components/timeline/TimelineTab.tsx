@@ -1,9 +1,9 @@
 import { QuarterTable } from "./QuarterTable";
 import { Timeline } from "./Timeline";
 
-export function Tab2() {
+export function TimelineTab() {
   return (
-    <div className="tab2">
+    <div className="timeline-tab">
       <QuarterTable />
       <Timeline />
     </div>
