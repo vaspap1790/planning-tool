@@ -113,6 +113,50 @@
   padding: 0;
   overflow: hidden;
 }
+
+/* Full Initiatives/Timeline tabs: the panel above stays put while the table /
+   timeline scrolls inside its own area, so column headers can stick. */
+.content.fill {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.content.fill .initiatives-tab,
+.content.fill .timeline-tab,
+.split-pane .initiatives-tab,
+.split-pane .timeline-tab {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.content.fill .components-panel,
+.content.fill .quarters-panel {
+  flex: 0 0 auto;
+}
+/* Split panes are short — drop the Components/Quarters editors and give the
+   table and timeline the whole pane (with their sticky headers). */
+.split-pane .components-panel,
+.split-pane .quarters-panel {
+  display: none;
+}
+.content.fill .initiatives-panel,
+.content.fill .timeline-panel,
+.split-pane .initiatives-panel,
+.split-pane .timeline-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  margin-bottom: 0;
+}
+.content.fill .table-scroll,
+.content.fill .timeline-scroll,
+.split-pane .table-scroll,
+.split-pane .timeline-scroll {
+  flex: 1 1 0;
+  min-height: 0;
+}
 .split-container {
   display: flex;
   flex-direction: column;
@@ -123,7 +167,9 @@
   user-select: none;
 }
 .split-pane {
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 20px;
   min-height: 0;
 }
@@ -673,6 +719,7 @@
   letter-spacing: 0.4px;
   position: sticky;
   top: 0;
+  z-index: 2;
   border-bottom: 1px solid var(--accent-strong);
   border-right-color: rgba(255, 255, 255, 0.25);
 }
@@ -838,7 +885,16 @@
 .timeline-grid > .tl-cell:first-child {
   border-left: 1px solid var(--grid-line);
 }
+/* The three header bands stick (stacked) to the top of the timeline scroller. */
+.tl-quarter,
+.tl-sprint,
+.tl-week {
+  position: sticky;
+  z-index: 5;
+}
 .tl-quarter {
+  top: 0;
+  height: 30px;
   background: var(--accent);
   color: #fff;
   font-weight: 700;
@@ -846,11 +902,14 @@
   border-right-color: rgba(255, 255, 255, 0.3);
 }
 .tl-sprint {
+  top: 30px;
+  height: 30px;
   background: var(--accent-soft);
   font-weight: 700;
   color: var(--accent-strong);
 }
 .tl-week {
+  top: 60px;
   background: var(--accent-tint);
   border-bottom: 1px solid var(--grid-line);
 }

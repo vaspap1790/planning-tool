@@ -15,7 +15,7 @@ export function QuarterTable() {
   };
 
   return (
-    <section className="panel">
+    <section className="panel quarters-panel">
       <header className="panel-head">
         <h2>Quarters</h2>
         <button className="btn push-right" onClick={addQuarter}>

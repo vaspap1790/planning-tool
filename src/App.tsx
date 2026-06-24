@@ -162,7 +162,15 @@ export default function App() {
           </div>
         </header>
 
-        <main className={view === "split" ? "content split" : "content"}>
+        <main
+          className={
+            view === "split"
+              ? "content split"
+              : view === "config"
+              ? "content"
+              : "content fill"
+          }
+        >
           {view === "split" ? (
             <SplitView top={<InitiativesTab />} bottom={<TimelineTab />} />
           ) : view === "initiatives" ? (
