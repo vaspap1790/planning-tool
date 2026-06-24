@@ -194,18 +194,36 @@ export function Timeline() {
 
             return (
               <div className="tl-init-row" key={i.id}>
-                <div
-                  className="tl-bar"
-                  style={{
-                    gridColumn: `${startCol + 1} / ${endCol + 2}`,
-                    background: color,
-                  }}
-                  title={`${i.name}: ${formatDisplay(i.startDate)} → ${formatDisplay(
-                    lastDay
-                  )}`}
-                >
-                  {i.name}
-                </div>
+                {i.link ? (
+                  <a
+                    className="tl-bar tl-bar-link"
+                    href={i.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      gridColumn: `${startCol + 1} / ${endCol + 2}`,
+                      background: color,
+                    }}
+                    title={`${i.name}: ${formatDisplay(i.startDate)} → ${formatDisplay(
+                      lastDay
+                    )} · opens link ↗`}
+                  >
+                    {i.name}
+                  </a>
+                ) : (
+                  <div
+                    className="tl-bar"
+                    style={{
+                      gridColumn: `${startCol + 1} / ${endCol + 2}`,
+                      background: color,
+                    }}
+                    title={`${i.name}: ${formatDisplay(i.startDate)} → ${formatDisplay(
+                      lastDay
+                    )}`}
+                  >
+                    {i.name}
+                  </div>
+                )}
 
                 {[...boxesByCol.entries()].map(([col, group]) => (
                   <div

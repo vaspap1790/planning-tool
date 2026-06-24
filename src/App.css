@@ -931,16 +931,30 @@
 }
 .tl-bar {
   grid-row: 1;
+  display: block;
   color: #fff;
   font-size: 12px;
   font-weight: 600;
   text-align: center;
+  text-decoration: none;
   padding: 6px 8px;
   border-radius: 6px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   box-shadow: var(--shadow-sm);
+}
+.tl-bar-link {
+  cursor: pointer;
+  transition: filter 0.12s, box-shadow 0.12s;
+}
+.tl-bar-link:hover {
+  filter: brightness(1.07);
+  box-shadow: var(--shadow);
+}
+.tl-bar-link:focus-visible {
+  outline: 2px solid var(--today-line);
+  outline-offset: 1px;
 }
 .tl-box-stack {
   grid-row: 2;
