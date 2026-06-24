@@ -23,11 +23,19 @@ export interface ReadinessItem {
   eta: string; // ISO yyyy-mm-dd; "" when none / N/A
 }
 
+/** A user-named dependency with the same status/ETA rules as a readiness input. */
+export interface Dependency extends ReadinessItem {
+  id: ID;
+  name: string;
+}
+
 /** Dev-readiness signals an initiative needs before development can proceed. */
 export interface DevReadiness {
   architecture: ReadinessItem;
   analytics: ReadinessItem;
   designs: ReadinessItem;
+  /** Free-form, user-added dependencies (0..n). */
+  dependencies: Dependency[];
 }
 
 /** One target-date entry for a given component within an initiative. */

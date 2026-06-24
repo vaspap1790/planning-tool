@@ -80,9 +80,6 @@ export function InitiativesTab() {
       <section className="panel initiatives-panel">
         <header className="panel-head">
           <h2>Initiatives</h2>
-          <button className="btn" onClick={addInitiative}>
-            + Add initiative
-          </button>
           <input
             className="text-input search-input"
             type="search"
@@ -90,6 +87,9 @@ export function InitiativesTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <button className="btn push-right" onClick={addInitiative}>
+            + Add
+          </button>
         </header>
 
         <div className="table-scroll">

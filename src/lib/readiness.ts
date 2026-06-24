@@ -12,6 +12,7 @@ export function defaultDevReadiness(): DevReadiness {
     architecture: { ...NEW_ITEM },
     analytics: { ...NEW_ITEM },
     designs: { ...NEW_ITEM },
+    dependencies: [],
   };
 }
 
@@ -49,7 +50,12 @@ export function readinessOutline(
   dr: DevReadiness,
   today = todayISO()
 ): ReadinessOutline {
-  const items = [dr.architecture, dr.analytics, dr.designs];
+  const items: ReadinessItem[] = [
+    dr.architecture,
+    dr.analytics,
+    dr.designs,
+    ...dr.dependencies,
+  ];
   if (items.every((it) => isComplete(it.status))) return "green";
   let worst: WarningLevel = "none";
   for (const it of items) {

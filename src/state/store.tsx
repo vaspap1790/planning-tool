@@ -15,7 +15,7 @@ import type {
   AppState,
   Component,
   Config,
-  DevReadiness,
+  Dependency,
   ID,
   Initiative,
   Quarter,
@@ -44,9 +44,13 @@ interface Actions {
   toggleComponent(initiativeId: ID, componentId: ID): void;
   updateReadiness(
     initiativeId: ID,
-    key: keyof DevReadiness,
+    key: "architecture" | "analytics" | "designs",
     patch: Partial<ReadinessItem>
   ): void;
+  // Dev-readiness dependencies (user-added)
+  addDependency(initiativeId: ID): void;
+  updateDependency(initiativeId: ID, depId: ID, patch: Partial<Dependency>): void;
+  deleteDependency(initiativeId: ID, depId: ID): void;
   // Target dates
   addTargetDate(initiativeId: ID, componentId: ID): void;
   updateTargetDate(
@@ -213,6 +217,35 @@ export function AppProvider({
           devReadiness: {
             ...i.devReadiness,
             [key]: { ...i.devReadiness[key], ...patch },
+          },
+        })),
+      addDependency: (initiativeId) =>
+        mapInitiative(initiativeId, (i) => ({
+          ...i,
+          devReadiness: {
+            ...i.devReadiness,
+            dependencies: [
+              ...i.devReadiness.dependencies,
+              { id: newId(), name: "", status: "not_provided", eta: "" },
+            ],
+          },
+        })),
+      updateDependency: (initiativeId, depId, patch) =>
+        mapInitiative(initiativeId, (i) => ({
+          ...i,
+          devReadiness: {
+            ...i.devReadiness,
+            dependencies: i.devReadiness.dependencies.map((d) =>
+              d.id === depId ? { ...d, ...patch } : d
+            ),
+          },
+        })),
+      deleteDependency: (initiativeId, depId) =>
+        mapInitiative(initiativeId, (i) => ({
+          ...i,
+          devReadiness: {
+            ...i.devReadiness,
+            dependencies: i.devReadiness.dependencies.filter((d) => d.id !== depId),
           },
         })),
 

@@ -2,33 +2,12 @@
 // means implementing this same interface against the DB + realtime channel.
 import type { AppState } from "../types";
 import { seed } from "../state/seed";
-import { DEFAULT_PRIORITY } from "./priority";
-import { defaultDevReadiness } from "./readiness";
 
-const KEY = "planning-tool-state-v1";
+const KEY = "planning-tool-state-v3";
 
 export interface Store {
   load(): AppState;
   save(state: AppState): void;
-}
-
-/**
- * Backfill fields added after a state was first persisted, so older saved or
- * remote payloads stay valid (priority, dev-readiness, component links).
- */
-export function migrateState(state: AppState): AppState {
-  return {
-    ...state,
-    components: state.components.map((c) => ({
-      ...c,
-      releaseCalendarLink: c.releaseCalendarLink ?? "",
-    })),
-    initiatives: state.initiatives.map((i) => ({
-      ...i,
-      priority: i.priority ?? DEFAULT_PRIORITY,
-      devReadiness: i.devReadiness ?? defaultDevReadiness(),
-    })),
-  };
 }
 
 export const localStore: Store = {
@@ -38,12 +17,8 @@ export const localStore: Store = {
       const raw = localStorage.getItem(KEY);
       if (!raw) return base;
       const saved = JSON.parse(raw) as Partial<AppState>;
-      // Deep-merge config so older saved states gain new config keys.
-      return migrateState({
-        ...base,
-        ...saved,
-        config: { ...base.config, ...saved.config },
-      });
+      // Deep-merge config so new config keys keep their defaults.
+      return { ...base, ...saved, config: { ...base.config, ...saved.config } };
     } catch {
       return base;
     }

@@ -295,6 +295,9 @@
 .timeline-hint {
   margin-left: auto;
 }
+.push-right {
+  margin-left: auto;
+}
 .timeline-start-control .seg {
   padding: 5px 11px;
   font-size: 12px;
@@ -586,6 +589,39 @@
   cursor: not-allowed;
 }
 
+/* Dependency rows: editable name + delete on top, then status and ETA. */
+.dependency-row {
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "name del"
+    "status status"
+    "eta eta";
+}
+.dependency-name {
+  grid-area: name;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  width: 100%;
+}
+.dependency-name:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.dependency-del {
+  grid-area: del;
+  padding: 3px;
+}
+.add-dependency {
+  align-self: stretch;
+  justify-content: center;
+}
+
 /* ---------- Modal detail list ---------- */
 .detail-list {
   display: grid;
@@ -673,9 +709,10 @@
 .col-target {
   min-width: 190px;
 }
-.col-actions {
+.grid td.col-actions {
   width: 44px;
   text-align: center;
+  vertical-align: middle;
 }
 .quarter-grid {
   min-width: 560px;

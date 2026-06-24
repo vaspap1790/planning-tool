@@ -1,7 +1,6 @@
 // Remote persistence + realtime sync against the single `planner_state` row.
 import type { AppState } from "../types";
 import { supabase } from "./supabase";
-import { migrateState } from "./storage";
 
 const TABLE = "planner_state";
 const ROW_ID = 1;
@@ -18,7 +17,7 @@ export async function fetchRemoteState(): Promise<AppState | null> {
     console.error("[remoteStore] fetch failed:", error.message);
     return null;
   }
-  return data?.data ? migrateState(data.data as AppState) : null;
+  return (data?.data as AppState) ?? null;
 }
 
 /** Upsert the shared state (single row). */
@@ -43,7 +42,7 @@ export function subscribeRemoteState(
       { event: "*", schema: "public", table: TABLE, filter: `id=eq.${ROW_ID}` },
       (payload) => {
         const next = (payload.new as { data?: AppState } | null)?.data;
-        if (next) onChange(migrateState(next));
+        if (next) onChange(next);
       }
     )
     .subscribe();

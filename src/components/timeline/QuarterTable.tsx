@@ -18,8 +18,8 @@ export function QuarterTable() {
     <section className="panel">
       <header className="panel-head">
         <h2>Quarters</h2>
-        <button className="btn" onClick={addQuarter}>
-          + Add quarter
+        <button className="btn push-right" onClick={addQuarter}>
+          + Add
         </button>
       </header>
       <table className="grid quarter-grid">

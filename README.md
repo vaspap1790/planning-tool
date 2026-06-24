@@ -1,7 +1,7 @@
-# Release Planner
+# T-Planner
 
-A two-tab planning tool (Initiatives + auto-generated Timeline) with a split view,
-shared and live-synced across users.
+A planning tool with an **Initiatives** table and an auto-generated **Timeline**, a
+stacked **Split** view, light/dark themes, and shared live-sync across users.
 
 **Live:** https://planning-tool.vaspap1790.workers.dev
 
@@ -15,7 +15,7 @@ npm run build          # type-check + production bundle into dist/
 ```
 
 Without a `.env`, the app runs in **local-only** mode (data stays in the browser).
-With Supabase configured, data is **shared and live-synced** (green "Live sync" badge).
+With Supabase configured, data is **shared and live-synced**.
 
 ## Supabase
 
@@ -40,38 +40,55 @@ Connected to GitHub, so **every push to `main` auto-builds and redeploys**:
 
 Note: Supabase free projects pause after ~7 days of zero activity (one click to wake).
 
-## What's implemented
+## Features
 
-**Tab 1 – Initiatives**
-- Components list (add / edit / delete) — drives the per-component checkboxes and columns.
+**Initiatives tab**
+- **Components** list (add / edit / delete), each with an optional **Release Calendar link**.
+  Drives the per-component checkboxes and the dynamic target-date columns.
 - Initiatives table: add / edit / delete rows; mandatory fields flagged in red when empty.
+- **Priority** (first column) — JIRA-style levels (Blocker → Trivial) shown as an icon,
+  changed via a popover; the table is **sortable** by Priority and Start Date.
 - Initiative name + optional clickable link.
-- Estimation accepts integers only; **Time left (sprints)** is computed from today, start date and estimation.
-- Per-component checkboxes; checking a component reveals a `Target Dates – <Component>` column.
-- Target-date entries (Date / Release / Env), add/edit/delete, outlined **yellow ≤2 weeks** and **red ≤1 week** before the date.
+- Estimation (integers); **Time left (sprints)** computed from today, start date and estimation.
+- **Dev Readiness** — Architecture / Analytics / Designs, plus any number of
+  user-added named **Dependencies** ("+ Add Dependency"). Each has a status
+  (Provided / Not Provided / N/A) and ETA (disabled for N/A) and is outlined
+  **green** (Provided / N/A), **yellow** (≤2 days before its ETA) or **red** (ETA reached
+  while still Not Provided); the cell border turns green when everything (inputs and
+  dependencies) is ready.
+- Per-component checkboxes reveal a `Target Dates – <Component>` column with
+  Date / Release / Env entries, outlined **yellow ≤2 weeks** and **red ≤1 week** before the date.
+- **Search** box filters rows by initiative name.
 
-**Tab 2 – Timeline**
+**Timeline tab**
 - Quarter table (add / edit / delete).
-- Timeline auto-generated from quarters → sprints (2 weeks) → weeks, with initiative bars
+- Timeline auto-generated from quarters → sprints → weeks, with initiative bars
   (start date + estimation) and target-date boxes placed under their week.
+- A **"Today" marker** (translucent vertical line) pinpoints the current date within its week.
+- **Timeline start** control (quarter start / current date) and a **Search** box, both in the header.
+- Clicking a target-date box opens a **details modal** with a **See Release Calendar** link
+  (uses the component's link; disabled when none is configured).
 
-**Split view** — both tabs stacked, with a draggable divider to resize the panes.
+**Split view** — both tabs stacked with a draggable divider; framed on each section's
+title on entry. Search is shared across both panes here.
 
-**Config tab** — parametrizable settings applied everywhere instantly:
-- **Sprint length** (weeks per sprint, default 2).
-- **Timeline start** — begin at each quarter's start, or clip to the current date.
+**Config tab** — settings applied everywhere instantly: **Sprint length** and **Timeline start**.
 
-All delete actions are guarded by a confirmation modal.
+**Theme** — light/dark toggle in the top bar, persisted across sessions.
+
+All delete actions are guarded by a confirmation modal. Search clears on tab change.
 
 ## Architecture
 
 - `src/types.ts` — domain model.
 - `src/lib/dates.ts` — pure, testable date/sprint/timeline logic.
+- `src/lib/priority.ts`, `src/lib/readiness.ts` — priority metadata and dev-readiness outlines.
 - `src/lib/storage.ts` — `Store` interface backing the localStorage instant cache.
 - `src/lib/supabase.ts` / `src/lib/remoteStore.ts` — shared source of truth + realtime.
 - `src/state/store.tsx` — React context with immutable-update actions; localStorage cache +
   debounced Supabase sync with echo-suppression.
-- `src/components/tab1`, `src/components/tab2`, `src/components/config` — UI.
+- `src/state/search.tsx` — per-tab search terms (linked in Split view).
+- `src/components/initiatives`, `src/components/timeline`, `src/components/config`, `src/components/ui` — UI.
 
 ## Rules
 
