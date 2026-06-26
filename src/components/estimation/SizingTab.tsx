@@ -8,6 +8,7 @@ import { InitiativeNameCell } from "../common/InitiativeNameCell";
 import { ScopeCell } from "../common/ScopeCell";
 import { TShirtSelect } from "../common/TShirtSelect";
 import { useInitiativeDelete } from "../common/useInitiativeDelete";
+import { useAddInitiative } from "../common/useAddInitiative";
 import { SIZING_DIMENSIONS, suggestedTShirtSize, scoreClass } from "../../lib/sizing";
 
 const GROUPS: { category: InitiativeCategory; label: string }[] = [
@@ -42,13 +43,13 @@ function ScoreSelect({
 }
 
 export function SizingTab() {
-  const { addInitiative, updateInitiative, setStage, updateSizing, addToPlanning } =
-    useApp();
+  const { updateInitiative, setStage, updateSizing, addToPlanning } = useApp();
   const rows = useSizingInitiatives();
   const requestDelete = useInitiativeDelete();
+  const addInitiative = useAddInitiative();
 
-  // "+ Add" here creates a sizing-only initiative, bypassing the earlier tabs.
-  const addSizingOnly = () => addInitiative(null, { sizing: true });
+  // "+ Add" here creates a sizing-stage initiative, after picking its category.
+  const addSizingOnly = () => addInitiative({ sizing: true });
 
   const remove = (i: Initiative) =>
     requestDelete(i, "Sizing", () => setStage(i.id, "sizing", false));
@@ -64,7 +65,7 @@ export function SizingTab() {
   const colCount = SIZING_DIMENSIONS.length + 7;
 
   const renderRow = (i: Initiative) => (
-    <tr key={i.id}>
+    <tr key={i.id} data-initiative-id={i.id}>
       <td className="col-priority center">
         <PrioritySelect
           value={i.priority}

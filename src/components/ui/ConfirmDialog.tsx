@@ -1,5 +1,6 @@
 // Imperative dialogs. `useConfirm()` for yes/no, `useChoose()` for a small set of
-// labelled choices. One dialog instance, reused everywhere.
+// labelled choice buttons, `usePickOne()` for a dropdown selection. One dialog
+// instance, reused everywhere.
 import {
   createContext,
   useCallback,
@@ -30,12 +31,24 @@ interface ChooseOptions<T extends string> {
   cancelLabel?: string;
 }
 
+interface PickOneOptions<T extends string> {
+  title: string;
+  message?: string;
+  options: { label: string; value: T }[];
+  /** Pre-selected value; defaults to the first option. */
+  defaultValue?: T;
+  confirmLabel?: string;
+  cancelLabel?: string;
+}
+
 type ConfirmFn = (opts: ConfirmOptions) => Promise<boolean>;
 type ChooseFn = <T extends string>(opts: ChooseOptions<T>) => Promise<T | null>;
+type PickOneFn = <T extends string>(opts: PickOneOptions<T>) => Promise<T | null>;
 
 interface DialogApi {
   confirm: ConfirmFn;
   choose: ChooseFn;
+  pickOne: PickOneFn;
 }
 
 const DialogContext = createContext<DialogApi | null>(null);
@@ -48,11 +61,18 @@ interface Button {
   autoFocus?: boolean;
 }
 
+interface SelectConfig {
+  options: { label: string; value: string }[];
+  confirmLabel: string;
+  cancelLabel: string;
+}
+
 interface DialogState {
   open: boolean;
   title: string;
   message?: string;
   buttons: Button[];
+  select?: SelectConfig;
 }
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
@@ -61,6 +81,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     title: "",
     buttons: [],
   });
+  const [selectValue, setSelectValue] = useState("");
   const resolver = useRef<(value: string | null) => void>(() => {});
 
   const open = useCallback(
@@ -90,14 +111,35 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const choose = useCallback<ChooseFn>(
     <T extends string>(opts: ChooseOptions<T>) =>
       open(opts.title, opts.message, [
-        { label: opts.cancelLabel ?? "Cancel", value: null, variant: "ghost" },
         ...opts.choices.map<Button>((c) => ({
           label: c.label,
           value: c.value,
           variant: c.danger ? "danger" : "primary",
         })),
+        { label: opts.cancelLabel ?? "Cancel", value: null, variant: "ghost" },
       ]) as Promise<T | null>,
     [open]
+  );
+
+  const pickOne = useCallback<PickOneFn>(
+    <T extends string>(opts: PickOneOptions<T>) => {
+      setSelectValue(opts.defaultValue ?? opts.options[0]?.value ?? "");
+      setState({
+        open: true,
+        title: opts.title,
+        message: opts.message,
+        buttons: [],
+        select: {
+          options: opts.options,
+          confirmLabel: opts.confirmLabel ?? "Add",
+          cancelLabel: opts.cancelLabel ?? "Cancel",
+        },
+      });
+      return new Promise<string | null>((resolve) => {
+        resolver.current = resolve;
+      }) as Promise<T | null>;
+    },
+    []
   );
 
   const close = (result: string | null) => {
@@ -109,7 +151,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     v === "ghost" ? "btn btn-ghost" : v === "danger" ? "btn btn-danger" : "btn";
 
   return (
-    <DialogContext.Provider value={{ confirm, choose }}>
+    <DialogContext.Provider value={{ confirm, choose, pickOne }}>
       {children}
       {state.open && (
         <div className="modal-overlay" onClick={() => close(null)}>
@@ -121,18 +163,48 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           >
             <h3 className="modal-title">{state.title}</h3>
             {state.message && <p className="modal-message">{state.message}</p>}
-            <div className="modal-actions">
-              {state.buttons.map((b) => (
-                <button
-                  key={b.label}
-                  className={btnClass(b.variant)}
-                  onClick={() => close(b.value)}
-                  autoFocus={b.autoFocus}
+
+            {state.select && (
+              <>
+                <select
+                  className="text-input modal-select"
+                  value={selectValue}
+                  autoFocus
+                  onChange={(e) => setSelectValue(e.target.value)}
                 >
-                  {b.label}
-                </button>
-              ))}
-            </div>
+                  {state.select.options.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="modal-actions">
+                  <button className="btn btn-ghost" onClick={() => close(null)}>
+                    {state.select.cancelLabel}
+                  </button>
+                  <button className="btn" onClick={() => close(selectValue)}>
+                    {state.select.confirmLabel}
+                  </button>
+                </div>
+              </>
+            )}
+
+            {!state.select && (
+              <div
+                className={`modal-actions${state.buttons.length > 2 ? " stacked" : ""}`}
+              >
+                {state.buttons.map((b) => (
+                  <button
+                    key={b.label}
+                    className={btnClass(b.variant)}
+                    onClick={() => close(b.value)}
+                    autoFocus={b.autoFocus}
+                  >
+                    {b.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -150,4 +222,10 @@ export function useChoose(): ChooseFn {
   const ctx = useContext(DialogContext);
   if (!ctx) throw new Error("useChoose must be used within ConfirmProvider");
   return ctx.choose;
+}
+
+export function usePickOne(): PickOneFn {
+  const ctx = useContext(DialogContext);
+  if (!ctx) throw new Error("usePickOne must be used within ConfirmProvider");
+  return ctx.pickOne;
 }

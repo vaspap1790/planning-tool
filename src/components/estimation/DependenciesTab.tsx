@@ -1,15 +1,14 @@
 // Estimation → Dependencies, with an Incoming / Outgoing segmented switch.
 import { useState } from "react";
 import { useApp, useInitiativesByCategory } from "../../state/store";
-import type { ID, Initiative } from "../../types";
+import type { Initiative } from "../../types";
 import { TrashIcon } from "../ui/TrashIcon";
 import { PrioritySelect } from "../initiatives/PrioritySelect";
 import { InitiativeNameCell } from "../common/InitiativeNameCell";
-import { PillSelect } from "../common/PillSelect";
+import { ScopeCell } from "../common/ScopeCell";
 import { TShirtSelect } from "../common/TShirtSelect";
 import { StatusSelect } from "../common/StatusSelect";
 import { useInitiativeDelete } from "../common/useInitiativeDelete";
-import { addId, removeId } from "../../lib/arrays";
 
 type Sub = "incoming" | "outgoing";
 
@@ -37,8 +36,7 @@ export function DependenciesTab() {
 }
 
 function IncomingTable() {
-  const { state, addInitiative, updateInitiative, toggleComponent, estimateSize } =
-    useApp();
+  const { addInitiative, updateInitiative, estimateSize } = useApp();
   const rows = useInitiativesByCategory("incoming");
   const requestDelete = useInitiativeDelete();
 
@@ -46,8 +44,6 @@ function IncomingTable() {
     requestDelete(i, "Incoming Dependencies", () =>
       updateInitiative(i.id, { category: null })
     );
-  const setIds = (i: Initiative, key: "natcoIds" | "lobIds" | "flowIds", ids: ID[]) =>
-    updateInitiative(i.id, { [key]: ids });
 
   return (
     <section className="panel">
@@ -64,10 +60,7 @@ function IncomingTable() {
               <th className="col-priority">Priority</th>
               <th className="col-initiative">Initiative</th>
               <th className="col-desc">Description</th>
-              <th className="col-pills">Components</th>
-              <th className="col-pills">NatCos</th>
-              <th className="col-pills">LOBs</th>
-              <th className="col-pills">Flows</th>
+              <th className="col-scope">Scope</th>
               <th className="col-tshirt">T-Shirt</th>
               <th className="col-status">Status</th>
               <th className="col-actions" />
@@ -93,47 +86,8 @@ function IncomingTable() {
                     onChange={(e) => updateInitiative(i.id, { description: e.target.value })}
                   />
                 </td>
-                <td className="col-pills">
-                  <PillSelect
-                    options={state.components}
-                    selectedIds={state.components
-                      .filter((c) => i.checkedComponents[c.id])
-                      .map((c) => c.id)}
-                    onAdd={(id) => toggleComponent(i.id, id)}
-                    onRemove={(id) => toggleComponent(i.id, id)}
-                    addLabel="+ Add Component"
-                    emptyHint="Add Components in Config"
-                  />
-                </td>
-                <td className="col-pills">
-                  <PillSelect
-                    options={state.config.natcos}
-                    selectedIds={i.natcoIds}
-                    onAdd={(id) => setIds(i, "natcoIds", addId(i.natcoIds, id))}
-                    onRemove={(id) => setIds(i, "natcoIds", removeId(i.natcoIds, id))}
-                    addLabel="+ Add NatCo"
-                    emptyHint="Add NatCos in Config"
-                  />
-                </td>
-                <td className="col-pills">
-                  <PillSelect
-                    options={state.config.lobs}
-                    selectedIds={i.lobIds}
-                    onAdd={(id) => setIds(i, "lobIds", addId(i.lobIds, id))}
-                    onRemove={(id) => setIds(i, "lobIds", removeId(i.lobIds, id))}
-                    addLabel="+ Add LOB"
-                    emptyHint="Add LOBs in Config"
-                  />
-                </td>
-                <td className="col-pills">
-                  <PillSelect
-                    options={state.config.flows}
-                    selectedIds={i.flowIds}
-                    onAdd={(id) => setIds(i, "flowIds", addId(i.flowIds, id))}
-                    onRemove={(id) => setIds(i, "flowIds", removeId(i.flowIds, id))}
-                    addLabel="+ Add Flow"
-                    emptyHint="Add Flows in Config"
-                  />
+                <td className="col-scope">
+                  <ScopeCell initiative={i} />
                 </td>
                 <td className="col-tshirt center">
                   <TShirtSelect
@@ -166,7 +120,7 @@ function IncomingTable() {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td className="empty-row muted" colSpan={10}>
+                <td className="empty-row muted" colSpan={7}>
                   No incoming dependencies yet.
                 </td>
               </tr>

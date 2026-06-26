@@ -278,10 +278,23 @@
   font-size: 13px;
   margin: 0 0 18px;
 }
+.modal-select {
+  width: 100%;
+  margin-bottom: 18px;
+}
 .modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+/* Many choices: stack full-width buttons vertically so they stay in the modal. */
+.modal-actions.stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+.modal-actions.stacked .btn {
+  width: 100%;
+  justify-content: center;
 }
 .btn.btn-danger {
   background: var(--warn-red);
@@ -711,9 +724,19 @@
   grid-area: del;
   padding: 3px;
 }
+.readiness-add-wrap {
+  position: relative;
+  align-self: stretch;
+}
 .add-dependency {
   align-self: stretch;
   justify-content: center;
+  width: 100%;
+}
+.pill-menu-sep {
+  height: 1px;
+  margin: 4px 2px;
+  background: var(--border);
 }
 
 /* ---------- Modal detail list ---------- */
@@ -864,6 +887,32 @@
 }
 .col-target {
   min-width: 190px;
+}
+/* One Target Dates cell split into per-component sub-cells (name + entries). */
+.target-subgrid {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.target-subcell {
+  flex: 1 0 150px;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.target-subcell + .target-subcell {
+  border-left: 1px solid var(--border);
+  padding-left: 8px;
+}
+.target-subcell-head {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 3px;
 }
 .grid td.col-actions {
   width: 44px;
@@ -1073,6 +1122,7 @@
   padding: 5px 4px 0;
 }
 .tl-box {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1082,7 +1132,7 @@
   background: var(--surface);
   border: 1.5px solid var(--border-strong);
   border-radius: 6px;
-  padding: 5px 6px;
+  padding: 5px 18px 5px 6px;
   font-size: 10.5px;
   line-height: 1.25;
   box-shadow: var(--shadow-sm);
@@ -1117,6 +1167,176 @@
 .tl-box.warn-red {
   border-color: var(--warn-red);
   background: var(--warn-red-bg);
+}
+.tl-box.warn-green {
+  border-color: var(--ok-green);
+  background: var(--ok-green-bg);
+}
+
+/* ---------- Board target-date chips (read-only, open the modal) ---------- */
+.target-chip {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  padding: 5px 18px 5px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text);
+  transition: box-shadow 0.12s, transform 0.12s;
+}
+.target-chip:hover {
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+.target-chip .td-env {
+  align-self: flex-start;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-weight: 600;
+  font-size: 10px;
+}
+.target-chip.warn-yellow {
+  border-color: var(--warn-yellow);
+  background: var(--warn-yellow-bg);
+}
+.target-chip.warn-red {
+  border-color: var(--warn-red);
+  background: var(--warn-red-bg);
+}
+.target-chip.warn-green {
+  border-color: var(--ok-green);
+  background: var(--ok-green-bg);
+}
+
+/* ---------- Target-date modal ---------- */
+.modal-sub {
+  margin: -6px 0 14px;
+  font-size: 13px;
+}
+.td-status {
+  margin-left: 10px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.td-status-ok {
+  background: var(--ok-green-bg);
+  color: var(--ok-green);
+}
+.td-status-due {
+  background: var(--warn-red-bg);
+  color: var(--warn-red);
+}
+.td-status-pending {
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.td-form {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.td-form .td-span {
+  grid-column: 1 / -1;
+}
+/* Keep every control inside the modal regardless of intrinsic input width. */
+.td-form .entry-field input,
+.td-form .text-input,
+.td-form .link-row {
+  width: 100%;
+  box-sizing: border-box;
+}
+.td-form .segmented {
+  display: flex;
+  width: 100%;
+}
+.td-form .segmented .seg {
+  flex: 1;
+}
+.td-resolve {
+  background: var(--ok-green);
+  border-color: var(--ok-green);
+}
+.td-resolve:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Handover teams (name + "done" checkbox) */
+.handover-list {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.handover-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px 6px 4px 10px;
+}
+.handover-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.handover-check input {
+  accent-color: var(--accent);
+}
+.handover-done {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+/* Pending-handover notification badge (count) on a target-date chip / timeline box */
+.td-badge {
+  position: absolute;
+  bottom: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--warn-red);
+  color: #fff;
+  border: 2px solid var(--surface);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+.target-chip .entry-del,
+.tl-box .entry-del {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  font-size: 14px;
+  line-height: 1;
+  padding: 1px 3px;
 }
 
 /* ---------- Phase-grouped navigation ---------- */
@@ -1455,6 +1675,18 @@
 .col-total {
   width: 72px;
   text-align: center;
+}
+/* Brief highlight on a freshly added initiative row after scrolling to it. */
+@keyframes row-flash {
+  0% {
+    background: var(--accent-soft);
+  }
+  100% {
+    background: transparent;
+  }
+}
+.row-flash td {
+  animation: row-flash 1.4s ease-out;
 }
 .grid .group-row td {
   background: var(--accent-soft);

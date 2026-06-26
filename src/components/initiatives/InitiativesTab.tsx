@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useApp, useBoardInitiatives } from "../../state/store";
 import { useSearch } from "../../state/search";
 import { timeLeftSprints } from "../../lib/dates";
 import { PRIORITY_META } from "../../lib/priority";
-import type { Initiative } from "../../types";
+import type { Initiative, InitiativeCategory } from "../../types";
 import { TargetDatesCell } from "./TargetDatesCell";
 import { DevReadinessCell } from "./DevReadinessCell";
 import { PrioritySelect } from "./PrioritySelect";
-import { CategorySelect } from "../common/CategorySelect";
 import { ScopeCell } from "../common/ScopeCell";
 import { useInitiativeDelete } from "../common/useInitiativeDelete";
+import { useAddInitiative } from "../common/useAddInitiative";
 import { TrashIcon } from "../ui/TrashIcon";
 
 type SortKey = "priority" | "startDate";
@@ -18,18 +18,18 @@ interface Sort {
   dir: "asc" | "desc";
 }
 
+const GROUPS: { category: InitiativeCategory; label: string }[] = [
+  { category: "business", label: "Business" },
+  { category: "engineering", label: "Engineering" },
+  { category: "incoming", label: "Incoming Dependencies" },
+  { category: "outgoing", label: "Outgoing Dependencies" },
+];
+
 export function InitiativesTab() {
-  const { state, addInitiative, updateInitiative, setStage } = useApp();
+  const { state, updateInitiative, setStage } = useApp();
   const requestDelete = useInitiativeDelete();
+  const addInitiative = useAddInitiative();
   const boardInitiatives = useBoardInitiatives();
-  // Components checked by at least one Board initiative drive the dynamic columns.
-  const activeComponents = useMemo(
-    () =>
-      state.components.filter((c) =>
-        boardInitiatives.some((i) => i.checkedComponents[c.id])
-      ),
-    [state.components, boardInitiatives]
-  );
   const [search, setSearch] = useSearch("initiatives");
   const [sort, setSort] = useState<Sort | null>(null);
 
@@ -76,6 +76,112 @@ export function InitiativesTab() {
     return sorted;
   }, [boardInitiatives, search, sort]);
 
+  const grouped = GROUPS.map((g) => ({
+    ...g,
+    items: displayed.filter((i) => i.category === g.category),
+  }));
+  // Board initiatives never categorised (added straight here) fall into "Other".
+  const other = displayed.filter((i) => !GROUPS.some((g) => g.category === i.category));
+
+  // Priority, Initiative, Scope, Dev Readiness, Estimation, Start Date, Time left,
+  // Target Dates, actions — for group-row colSpans.
+  const colCount = 9;
+
+  const renderRow = (i: Initiative) => (
+    <tr key={i.id} data-initiative-id={i.id}>
+      <td className="col-priority center">
+        <PrioritySelect
+          value={i.priority}
+          onChange={(priority) => updateInitiative(i.id, { priority })}
+        />
+      </td>
+      <td className="col-initiative">
+        <input
+          className={`cell-input strong ${i.name.trim() ? "" : "invalid"}`}
+          value={i.name}
+          placeholder="Required"
+          onChange={(e) => updateInitiative(i.id, { name: e.target.value })}
+        />
+        <div className="link-row">
+          <input
+            className="cell-input link-input"
+            value={i.link}
+            placeholder="https://link (optional)"
+            onChange={(e) => updateInitiative(i.id, { link: e.target.value })}
+          />
+          {i.link && (
+            <a
+              className="open-link"
+              href={i.link}
+              target="_blank"
+              rel="noreferrer"
+              title="Open link"
+            >
+              ↗
+            </a>
+          )}
+        </div>
+      </td>
+
+      <td className="col-scope">
+        <ScopeCell initiative={i} />
+      </td>
+
+      <td className="col-readiness">
+        <DevReadinessCell initiativeId={i.id} devReadiness={i.devReadiness} />
+      </td>
+
+      <td className="center">
+        <input
+          className="cell-input num"
+          type="number"
+          min={0}
+          step={1}
+          value={i.estimationSprints}
+          onChange={(e) => setEstimation(i, e.target.value)}
+        />
+      </td>
+
+      <td className="center">
+        <input
+          className={`cell-input ${i.startDate ? "" : "invalid"}`}
+          type="date"
+          value={i.startDate}
+          onChange={(e) => updateInitiative(i.id, { startDate: e.target.value })}
+        />
+      </td>
+
+      <td className="center computed">
+        {timeLeftSprints(i.startDate, i.estimationSprints, state.config.sprintWeeks)}
+      </td>
+
+      <td className="col-target">
+        {(() => {
+          const comps = state.components.filter((c) => i.checkedComponents[c.id]);
+          if (comps.length === 0) {
+            return <span className="muted small">Add components in Scope</span>;
+          }
+          return (
+            <div className="target-subgrid">
+              {comps.map((c) => (
+                <div className="target-subcell" key={c.id}>
+                  <div className="target-subcell-head">{c.name}</div>
+                  <TargetDatesCell initiativeId={i.id} componentId={c.id} />
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </td>
+
+      <td className="col-actions">
+        <button className="icon-btn" title="Delete row" onClick={() => removeInitiative(i)}>
+          <TrashIcon />
+        </button>
+      </td>
+    </tr>
+  );
+
   return (
     <div className="initiatives-tab">
       <section className="panel initiatives-panel">
@@ -88,7 +194,10 @@ export function InitiativesTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button className="btn push-right" onClick={() => addInitiative()}>
+          <button
+            className="btn push-right"
+            onClick={() => addInitiative({ implementation: true })}
+          >
             + Add
           </button>
         </header>
@@ -103,7 +212,6 @@ export function InitiativesTab() {
                   </button>
                 </th>
                 <th className="col-initiative">Initiative</th>
-                <th className="col-category">Category</th>
                 <th className="col-scope">Scope</th>
                 <th className="col-readiness">Dev Readiness</th>
                 <th>Estimation (Sprints)</th>
@@ -113,120 +221,29 @@ export function InitiativesTab() {
                   </button>
                 </th>
                 <th>Time left (Sprints)</th>
-                {activeComponents.map((c) => (
-                  <th key={c.id} className="col-target">
-                    Target Dates – {c.name}
-                  </th>
-                ))}
+                <th className="col-target">Target Dates</th>
                 <th className="col-actions" />
               </tr>
             </thead>
             <tbody>
-              {displayed.map((i) => (
-                <tr key={i.id}>
-                  <td className="col-priority center">
-                    <PrioritySelect
-                      value={i.priority}
-                      onChange={(priority) => updateInitiative(i.id, { priority })}
-                    />
-                  </td>
-                  <td className="col-initiative">
-                    <input
-                      className={`cell-input strong ${i.name.trim() ? "" : "invalid"}`}
-                      value={i.name}
-                      placeholder="Required"
-                      onChange={(e) => updateInitiative(i.id, { name: e.target.value })}
-                    />
-                    <div className="link-row">
-                      <input
-                        className="cell-input link-input"
-                        value={i.link}
-                        placeholder="https://link (optional)"
-                        onChange={(e) => updateInitiative(i.id, { link: e.target.value })}
-                      />
-                      {i.link && (
-                        <a
-                          className="open-link"
-                          href={i.link}
-                          target="_blank"
-                          rel="noreferrer"
-                          title="Open link"
-                        >
-                          ↗
-                        </a>
-                      )}
-                    </div>
-                  </td>
-
-                  <td className="col-category">
-                    <CategorySelect
-                      value={i.category}
-                      onChange={(category) => updateInitiative(i.id, { category })}
-                    />
-                  </td>
-
-                  <td className="col-scope">
-                    <ScopeCell initiative={i} />
-                  </td>
-
-                  <td className="col-readiness">
-                    <DevReadinessCell
-                      initiativeId={i.id}
-                      devReadiness={i.devReadiness}
-                    />
-                  </td>
-
-                  <td className="center">
-                    <input
-                      className="cell-input num"
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={i.estimationSprints}
-                      onChange={(e) => setEstimation(i, e.target.value)}
-                    />
-                  </td>
-
-                  <td className="center">
-                    <input
-                      className={`cell-input ${i.startDate ? "" : "invalid"}`}
-                      type="date"
-                      value={i.startDate}
-                      onChange={(e) =>
-                        updateInitiative(i.id, { startDate: e.target.value })
-                      }
-                    />
-                  </td>
-
-                  <td className="center computed">
-                    {timeLeftSprints(
-                      i.startDate,
-                      i.estimationSprints,
-                      state.config.sprintWeeks
-                    )}
-                  </td>
-
-                  {activeComponents.map((c) => (
-                    <td key={c.id} className="col-target">
-                      {i.checkedComponents[c.id] ? (
-                        <TargetDatesCell initiativeId={i.id} componentId={c.id} />
-                      ) : (
-                        <span className="muted small">—</span>
-                      )}
-                    </td>
-                  ))}
-
-                  <td className="col-actions">
-                    <button
-                      className="icon-btn"
-                      title="Delete row"
-                      onClick={() => removeInitiative(i)}
-                    >
-                      <TrashIcon />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {grouped.map((g) =>
+                g.items.length === 0 ? null : (
+                  <Fragment key={g.category}>
+                    <tr className="group-row">
+                      <td colSpan={colCount}>{g.label}</td>
+                    </tr>
+                    {g.items.map(renderRow)}
+                  </Fragment>
+                )
+              )}
+              {other.length > 0 && (
+                <Fragment>
+                  <tr className="group-row">
+                    <td colSpan={colCount}>Other</td>
+                  </tr>
+                  {other.map(renderRow)}
+                </Fragment>
+              )}
             </tbody>
           </table>
         </div>

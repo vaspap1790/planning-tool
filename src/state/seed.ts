@@ -1,5 +1,12 @@
 // Initial demo data mirroring the source spreadsheets so the prototype looks familiar.
-import type { AppState, Initiative } from "../types";
+import type { AppState, Initiative, TargetDateEntry } from "../types";
+
+/** Build a target-date entry, defaulting the modal-only fields. */
+function td(
+  e: Pick<TargetDateEntry, "id" | "date" | "releaseVersion" | "env">
+): TargetDateEntry {
+  return { mergeLink: "", handoverNeeded: false, handoverTo: [], successful: false, ...e };
+}
 
 /** Stable ids for the default Planning platforms (Web / App / BFF / MAPI). */
 export const DEFAULT_PLATFORM_IDS = {
@@ -80,10 +87,10 @@ export function seed(): AppState {
         checkedComponents: { [MAVI]: true, [MMKC]: true },
         targetDates: {
           [MAVI]: [
-            { id: "t1", date: "2026-08-27", releaseVersion: "16.5.0", env: "SIT" },
-            { id: "t2", date: "2026-08-27", releaseVersion: "16.5.0", env: "UAT" },
+            td({ id: "t1", date: "2026-08-27", releaseVersion: "16.5.0", env: "SIT" }),
+            td({ id: "t2", date: "2026-08-27", releaseVersion: "16.5.0", env: "UAT" }),
           ],
-          [MMKC]: [{ id: "t3", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" }],
+          [MMKC]: [td({ id: "t3", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" })],
         },
         ...initiativeExtras(),
       },
@@ -109,8 +116,8 @@ export function seed(): AppState {
         startDate: "2026-07-07",
         checkedComponents: { [MAVI]: true, [MMKC]: true },
         targetDates: {
-          [MAVI]: [{ id: "t4", date: "2026-08-27", releaseVersion: "16.5.0", env: "UAT" }],
-          [MMKC]: [{ id: "t5", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" }],
+          [MAVI]: [td({ id: "t4", date: "2026-08-27", releaseVersion: "16.5.0", env: "UAT" })],
+          [MMKC]: [td({ id: "t5", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" })],
         },
         ...initiativeExtras(),
       },
@@ -129,8 +136,8 @@ export function seed(): AppState {
         startDate: "2026-07-07",
         checkedComponents: { [MAVI]: true, [MMKC]: true },
         targetDates: {
-          [MAVI]: [{ id: "t6", date: "2026-08-27", releaseVersion: "16.5.0", env: "UAT" }],
-          [MMKC]: [{ id: "t7", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" }],
+          [MAVI]: [td({ id: "t6", date: "2026-08-27", releaseVersion: "16.5.0", env: "UAT" })],
+          [MMKC]: [td({ id: "t7", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" })],
         },
         ...initiativeExtras(),
       },

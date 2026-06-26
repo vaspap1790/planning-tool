@@ -7,31 +7,43 @@ import {
   diffDays,
   formatDisplay,
   initiativeLastDay,
+  pendingHandoverCount,
+  targetEntryLevel,
   todayISO,
-  warningLevel,
   weekIndexForDate,
 } from "../../lib/dates";
-import { TargetDateModal, type TargetDateDetails } from "./TargetDateModal";
+import { useConfirm } from "../ui/ConfirmDialog";
+import { TargetDateModal } from "./TargetDateModal";
 
 // Vivid, distinct bar colors cycled per initiative (Telekom magenta leads).
 const BAR_COLORS = ["#E20074", "#7C3AED", "#00A6A6", "#FF8A00", "#2563EB", "#16A34A"];
 
 interface Box {
   col: number;
+  initiativeId: string;
   componentId: string;
   componentName: string;
-  initiativeName: string;
+  entryId: string;
   date: string;
   releaseVersion: string;
   env: string;
+  successful: boolean;
+  pendingHandovers: number;
+}
+
+interface Selected {
+  initiativeId: string;
+  componentId: string;
+  entryId: string;
 }
 
 export function Timeline() {
-  const { state, updateConfig } = useApp();
+  const { state, updateConfig, deleteTargetDate } = useApp();
+  const confirm = useConfirm();
   const boardInitiatives = useBoardInitiatives();
   const { sprintWeeks, timelineStart } = state.config;
   const [search, setSearch] = useSearch("timeline");
-  const [selected, setSelected] = useState<TargetDateDetails | null>(null);
+  const [selected, setSelected] = useState<Selected | null>(null);
 
   // Clear the filter every time this tab is entered (tab switch / split toggle remount).
   useEffect(() => {
@@ -48,14 +60,19 @@ export function Timeline() {
 
   const openBox = (b: Box) =>
     setSelected({
-      initiativeName: b.initiativeName,
-      componentName: b.componentName,
-      date: b.date,
-      releaseVersion: b.releaseVersion,
-      env: b.env,
-      releaseCalendarLink:
-        state.components.find((c) => c.id === b.componentId)?.releaseCalendarLink ?? "",
+      initiativeId: b.initiativeId,
+      componentId: b.componentId,
+      entryId: b.entryId,
     });
+
+  const removeBox = async (b: Box) => {
+    const ok = await confirm({
+      title: "Delete this target date?",
+      message: "This entry and its handover details will be removed.",
+      confirmLabel: "Delete",
+    });
+    if (ok) deleteTargetDate(b.initiativeId, b.componentId, b.entryId);
+  };
   const timeline = useMemo(
     () =>
       buildTimeline(state.quarters, {
@@ -177,12 +194,15 @@ export function Timeline() {
               for (const e of i.targetDates[componentId] ?? []) {
                 boxes.push({
                   col: weekIndexForDate(timeline.weeks, e.date),
+                  initiativeId: i.id,
                   componentId,
                   componentName: componentName(componentId),
-                  initiativeName: i.name,
+                  entryId: e.id,
                   date: e.date,
                   releaseVersion: e.releaseVersion,
                   env: e.env,
+                  successful: e.successful,
+                  pendingHandovers: pendingHandoverCount(e),
                 });
               }
             }
@@ -233,18 +253,43 @@ export function Timeline() {
                     style={{ gridColumn: col + 1 }}
                   >
                     {group.map((b, bi) => (
-                      <button
+                      <div
                         key={bi}
-                        type="button"
-                        className={`tl-box warn-${warningLevel(b.date)}`}
+                        className={`tl-box warn-${targetEntryLevel({
+                          date: b.date,
+                          successful: b.successful,
+                        })}`}
                         onClick={() => openBox(b)}
-                        title="View details"
+                        onKeyDown={(ev) => ev.key === "Enter" && openBox(b)}
+                        role="button"
+                        tabIndex={0}
+                        title="Edit target date"
                       >
+                        <button
+                          className="icon-btn entry-del"
+                          title="Remove target date"
+                          aria-label="Remove target date"
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            removeBox(b);
+                          }}
+                        >
+                          ×
+                        </button>
                         <strong>{b.componentName}</strong>
                         <span>{formatDisplay(b.date)}</span>
                         {b.releaseVersion && <span>v{b.releaseVersion}</span>}
                         {b.env && <span className="tl-env">{b.env}</span>}
-                      </button>
+                        {b.pendingHandovers > 0 && (
+                          <span
+                            className="td-badge"
+                            title={`${b.pendingHandovers} handover(s) pending`}
+                            aria-label={`${b.pendingHandovers} handovers pending`}
+                          >
+                            {b.pendingHandovers}
+                          </span>
+                        )}
+                      </div>
                     ))}
                   </div>
                 ))}
@@ -263,7 +308,12 @@ export function Timeline() {
       </div>
 
       {selected && (
-        <TargetDateModal details={selected} onClose={() => setSelected(null)} />
+        <TargetDateModal
+          initiativeId={selected.initiativeId}
+          componentId={selected.componentId}
+          entryId={selected.entryId}
+          onClose={() => setSelected(null)}
+        />
       )}
     </section>
   );

@@ -6,6 +6,7 @@ import { sprintsBetween } from "../../lib/dates";
 import { TrashIcon } from "../ui/TrashIcon";
 import { ScopeCell } from "../common/ScopeCell";
 import { useInitiativeDelete } from "../common/useInitiativeDelete";
+import { useAddInitiative } from "../common/useAddInitiative";
 
 const GROUPS: { category: InitiativeCategory; label: string }[] = [
   { category: "business", label: "Business" },
@@ -22,7 +23,6 @@ function deficitClass(value: number): string {
 export function PlanningTab() {
   const {
     state,
-    addInitiative,
     updateInitiative,
     setStage,
     setPlanningEffort,
@@ -32,6 +32,7 @@ export function PlanningTab() {
   } = useApp();
   const rows = usePlanningInitiatives();
   const requestDelete = useInitiativeDelete();
+  const addInitiative = useAddInitiative();
 
   const platforms = state.config.platforms;
   const { qStart, qEnd, capacity } = state.config.planning;
@@ -95,7 +96,7 @@ export function PlanningTab() {
           </div>
           <button
             className="btn push-right"
-            onClick={() => addInitiative(null, { planning: true })}
+            onClick={() => addInitiative({ planning: true })}
           >
             + Add
           </button>
@@ -264,7 +265,7 @@ function InitiativeRow({
   onDelete: (i: Initiative) => void;
 }) {
   return (
-    <tr>
+    <tr data-initiative-id={i.id}>
       <td className="col-initiative">
         <input
           className={`cell-input strong ${i.name.trim() ? "" : "invalid"}`}

@@ -6,6 +6,7 @@ import { TrashIcon } from "../ui/TrashIcon";
 import { PrioritySelect } from "../initiatives/PrioritySelect";
 import { InitiativeNameCell } from "../common/InitiativeNameCell";
 import { PillSelect } from "../common/PillSelect";
+import { ScopeCell } from "../common/ScopeCell";
 import { TShirtSelect } from "../common/TShirtSelect";
 import { useInitiativeDelete } from "../common/useInitiativeDelete";
 import { addId, removeId } from "../../lib/arrays";
@@ -16,8 +17,7 @@ interface Props {
 }
 
 export function EstimationListTab({ category, title }: Props) {
-  const { state, addInitiative, updateInitiative, toggleComponent, estimateSize } =
-    useApp();
+  const { state, addInitiative, updateInitiative, estimateSize } = useApp();
   const rows = useInitiativesByCategory(category);
   const requestDelete = useInitiativeDelete();
   const [search, setSearch] = useState("");
@@ -30,11 +30,7 @@ export function EstimationListTab({ category, title }: Props) {
   const remove = (i: Initiative) =>
     requestDelete(i, title, () => updateInitiative(i.id, { category: null }));
 
-  const setIds = (
-    i: Initiative,
-    key: "okrIds" | "natcoIds" | "lobIds" | "flowIds",
-    ids: ID[]
-  ) => updateInitiative(i.id, { [key]: ids });
+  const setOkrIds = (i: Initiative, ids: ID[]) => updateInitiative(i.id, { okrIds: ids });
 
   return (
     <div className="estimation-tab">
@@ -62,10 +58,7 @@ export function EstimationListTab({ category, title }: Props) {
                 <th className="col-pills">OKRs</th>
                 <th className="col-link">PRD</th>
                 <th className="col-desc">Description</th>
-                <th className="col-pills">Components</th>
-                <th className="col-pills">NatCos</th>
-                <th className="col-pills">LOBs</th>
-                <th className="col-pills">Flows</th>
+                <th className="col-scope">Scope</th>
                 <th className="col-tshirt">T-Shirt</th>
                 <th className="col-actions" />
               </tr>
@@ -86,8 +79,8 @@ export function EstimationListTab({ category, title }: Props) {
                     <PillSelect
                       options={state.config.okrs}
                       selectedIds={i.okrIds}
-                      onAdd={(id) => setIds(i, "okrIds", addId(i.okrIds, id))}
-                      onRemove={(id) => setIds(i, "okrIds", removeId(i.okrIds, id))}
+                      onAdd={(id) => setOkrIds(i, addId(i.okrIds, id))}
+                      onRemove={(id) => setOkrIds(i, removeId(i.okrIds, id))}
                       addLabel="+ Add OKR"
                       emptyHint="Add OKRs in Config"
                     />
@@ -121,47 +114,8 @@ export function EstimationListTab({ category, title }: Props) {
                       onChange={(e) => updateInitiative(i.id, { description: e.target.value })}
                     />
                   </td>
-                  <td className="col-pills">
-                    <PillSelect
-                      options={state.components}
-                      selectedIds={state.components
-                        .filter((c) => i.checkedComponents[c.id])
-                        .map((c) => c.id)}
-                      onAdd={(id) => toggleComponent(i.id, id)}
-                      onRemove={(id) => toggleComponent(i.id, id)}
-                      addLabel="+ Add Component"
-                      emptyHint="Add Components in Config"
-                    />
-                  </td>
-                  <td className="col-pills">
-                    <PillSelect
-                      options={state.config.natcos}
-                      selectedIds={i.natcoIds}
-                      onAdd={(id) => setIds(i, "natcoIds", addId(i.natcoIds, id))}
-                      onRemove={(id) => setIds(i, "natcoIds", removeId(i.natcoIds, id))}
-                      addLabel="+ Add NatCo"
-                      emptyHint="Add NatCos in Config"
-                    />
-                  </td>
-                  <td className="col-pills">
-                    <PillSelect
-                      options={state.config.lobs}
-                      selectedIds={i.lobIds}
-                      onAdd={(id) => setIds(i, "lobIds", addId(i.lobIds, id))}
-                      onRemove={(id) => setIds(i, "lobIds", removeId(i.lobIds, id))}
-                      addLabel="+ Add LOB"
-                      emptyHint="Add LOBs in Config"
-                    />
-                  </td>
-                  <td className="col-pills">
-                    <PillSelect
-                      options={state.config.flows}
-                      selectedIds={i.flowIds}
-                      onAdd={(id) => setIds(i, "flowIds", addId(i.flowIds, id))}
-                      onRemove={(id) => setIds(i, "flowIds", removeId(i.flowIds, id))}
-                      addLabel="+ Add Flow"
-                      emptyHint="Add Flows in Config"
-                    />
+                  <td className="col-scope">
+                    <ScopeCell initiative={i} />
                   </td>
                   <td className="col-tshirt center">
                     <TShirtSelect
@@ -188,7 +142,7 @@ export function EstimationListTab({ category, title }: Props) {
               ))}
               {displayed.length === 0 && (
                 <tr>
-                  <td className="empty-row muted" colSpan={11}>
+                  <td className="empty-row muted" colSpan={8}>
                     No initiatives yet. Click “+ Add” to create one.
                   </td>
                 </tr>

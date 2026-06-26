@@ -17,9 +17,24 @@ export interface Store {
  */
 export function normalizeInitiative(raw: Partial<Initiative>): Initiative {
   const extras = initiativeExtras();
+  // Backfill modal-only fields on every target-date entry.
+  const targetDates: Initiative["targetDates"] = {};
+  for (const [componentId, entries] of Object.entries(raw.targetDates ?? {})) {
+    targetDates[componentId] = (entries ?? []).map((e) => ({
+      ...e,
+      mergeLink: e.mergeLink ?? "",
+      handoverNeeded: e.handoverNeeded ?? false,
+      // Tolerate the earlier string[] shape by mapping to {name, done}.
+      handoverTo: (e.handoverTo ?? []).map((h) =>
+        typeof h === "string" ? { name: h, done: false } : { name: h.name, done: !!h.done }
+      ),
+      successful: e.successful ?? false,
+    }));
+  }
   return {
     ...extras,
     ...raw,
+    targetDates,
     // Ensure nested defaults survive a partial saved shape.
     stages: { ...extras.stages, ...raw.stages },
     sizing: { ...extras.sizing, ...raw.sizing },

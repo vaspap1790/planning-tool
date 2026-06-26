@@ -46,10 +46,11 @@ interface Actions {
   updateComponent(id: ID, patch: Partial<Component>): void;
   deleteComponent(id: ID): void;
   // Initiatives
+  /** Appends a new initiative and returns its id (so callers can scroll to it). */
   addInitiative(
     category?: InitiativeCategory | null,
     stageOverride?: Partial<InitiativeStages>
-  ): void;
+  ): ID;
   updateInitiative(id: ID, patch: Partial<Initiative>): void;
   deleteInitiative(id: ID): void;
   toggleComponent(initiativeId: ID, componentId: ID): void;
@@ -77,7 +78,7 @@ interface Actions {
   updateDependency(initiativeId: ID, depId: ID, patch: Partial<Dependency>): void;
   deleteDependency(initiativeId: ID, depId: ID): void;
   // Target dates
-  addTargetDate(initiativeId: ID, componentId: ID): void;
+  addTargetDate(initiativeId: ID, componentId: ID, entryId?: ID): void;
   updateTargetDate(
     initiativeId: ID,
     componentId: ID,
@@ -212,7 +213,8 @@ export function AppProvider({
           }),
         })),
 
-      addInitiative: (category = null, stageOverride) =>
+      addInitiative: (category = null, stageOverride) => {
+        const id = newId();
         setState((s) => {
           const extras = initiativeExtras();
           // Explicit override (Sizing/Planning direct-add) wins; otherwise an
@@ -229,7 +231,7 @@ export function AppProvider({
               ...s.initiatives,
               {
                 ...extras,
-                id: newId(),
+                id,
                 name: "New initiative",
                 link: "",
                 priority: DEFAULT_PRIORITY,
@@ -243,7 +245,9 @@ export function AppProvider({
               },
             ],
           };
-        }),
+        });
+        return id;
+      },
       updateInitiative: (id, patch) => mapInitiative(id, (i) => ({ ...i, ...patch })),
       estimateSize: (id) =>
         mapInitiative(id, (i) => ({ ...i, stages: { ...i.stages, sizing: true } })),
@@ -347,7 +351,7 @@ export function AppProvider({
           },
         })),
 
-      addTargetDate: (initiativeId, componentId) =>
+      addTargetDate: (initiativeId, componentId, entryId) =>
         mapInitiative(initiativeId, (i) => ({
           ...i,
           targetDates: {
@@ -355,10 +359,14 @@ export function AppProvider({
             [componentId]: [
               ...(i.targetDates[componentId] ?? []),
               {
-                id: newId(),
+                id: entryId ?? newId(),
                 date: new Date().toISOString().slice(0, 10),
                 releaseVersion: "",
                 env: "",
+                mergeLink: "",
+                handoverNeeded: false,
+                handoverTo: [],
+                successful: false,
               },
             ],
           },

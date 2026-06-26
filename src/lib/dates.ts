@@ -1,5 +1,5 @@
 // Pure date helpers. No framework dependencies so they are trivially unit-testable.
-import type { Quarter, WarningLevel } from "../types";
+import type { Quarter, TargetDateEntry, WarningLevel } from "../types";
 
 export const DEFAULT_SPRINT_WEEKS = 2;
 
@@ -94,6 +94,31 @@ export function warningLevel(targetISO: string, today = todayISO()): WarningLeve
   if (days <= 7) return "red";
   if (days <= 14) return "yellow";
   return "none";
+}
+
+/** True once the target date has arrived (today is on or after it). */
+export function targetReached(targetISO: string, today = todayISO()): boolean {
+  return diffDays(today, targetISO) <= 0;
+}
+
+/**
+ * Colour band for a target-date entry: green once resolved (`successful`),
+ * otherwise the proximity warning level (red/yellow/none).
+ */
+export function targetEntryLevel(
+  entry: Pick<TargetDateEntry, "date" | "successful">,
+  today = todayISO()
+): "green" | WarningLevel {
+  if (entry.successful) return "green";
+  return warningLevel(entry.date, today);
+}
+
+/** Number of required handovers still not marked done (0 when none pending). */
+export function pendingHandoverCount(
+  entry: Pick<TargetDateEntry, "handoverNeeded" | "handoverTo">
+): number {
+  if (!entry.handoverNeeded) return 0;
+  return entry.handoverTo.filter((h) => !h.done).length;
 }
 
 // ---- Tab 2 timeline generation ---------------------------------------------

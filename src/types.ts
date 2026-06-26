@@ -38,12 +38,26 @@ export interface DevReadiness {
   dependencies: Dependency[];
 }
 
+/** A team a target date must be handed over to, and whether that has happened. */
+export interface HandoverItem {
+  name: string;
+  done: boolean;
+}
+
 /** One target-date entry for a given component within an initiative. */
 export interface TargetDateEntry {
   id: ID;
   date: string; // ISO yyyy-mm-dd
   releaseVersion: string;
   env: string;
+  /** Link to the merge / pull request (edited in the modal). */
+  mergeLink: string;
+  /** Whether a handover is required for this target date. */
+  handoverNeeded: boolean;
+  /** Teams to hand over to, each tracking whether the handover happened. */
+  handoverTo: HandoverItem[];
+  /** Marked done via the modal's Resolve action → renders green. */
+  successful: boolean;
 }
 
 /**
