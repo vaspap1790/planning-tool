@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { useApp, useActiveComponents } from "../../state/store";
+import { useApp, useBoardInitiatives } from "../../state/store";
 import { useSearch } from "../../state/search";
 import { timeLeftSprints } from "../../lib/dates";
 import { PRIORITY_META } from "../../lib/priority";
 import type { Initiative } from "../../types";
-import { useConfirm } from "../ui/ConfirmDialog";
-import { ComponentsList } from "./ComponentsList";
 import { TargetDatesCell } from "./TargetDatesCell";
 import { DevReadinessCell } from "./DevReadinessCell";
 import { PrioritySelect } from "./PrioritySelect";
+import { CategorySelect } from "../common/CategorySelect";
+import { ScopeCell } from "../common/ScopeCell";
+import { useInitiativeDelete } from "../common/useInitiativeDelete";
 import { TrashIcon } from "../ui/TrashIcon";
 
 type SortKey = "priority" | "startDate";
@@ -18,10 +19,17 @@ interface Sort {
 }
 
 export function InitiativesTab() {
-  const { state, addInitiative, updateInitiative, deleteInitiative, toggleComponent } =
-    useApp();
-  const confirm = useConfirm();
-  const activeComponents = useActiveComponents();
+  const { state, addInitiative, updateInitiative, setStage } = useApp();
+  const requestDelete = useInitiativeDelete();
+  const boardInitiatives = useBoardInitiatives();
+  // Components checked by at least one Board initiative drive the dynamic columns.
+  const activeComponents = useMemo(
+    () =>
+      state.components.filter((c) =>
+        boardInitiatives.some((i) => i.checkedComponents[c.id])
+      ),
+    [state.components, boardInitiatives]
+  );
   const [search, setSearch] = useSearch("initiatives");
   const [sort, setSort] = useState<Sort | null>(null);
 
@@ -36,13 +44,8 @@ export function InitiativesTab() {
     updateInitiative(i.id, { estimationSprints: Number.isFinite(n) ? Math.max(0, n) : 0 });
   };
 
-  const removeInitiative = async (i: Initiative) => {
-    const ok = await confirm({
-      title: `Delete "${i.name || "this initiative"}"?`,
-      message: "This row and its target dates will be removed.",
-    });
-    if (ok) deleteInitiative(i.id);
-  };
+  const removeInitiative = (i: Initiative) =>
+    requestDelete(i, "Board", () => setStage(i.id, "implementation", false));
 
   const toggleSort = (key: SortKey) =>
     setSort((s) =>
@@ -60,8 +63,8 @@ export function InitiativesTab() {
   const displayed = useMemo(() => {
     const q = search.trim().toLowerCase();
     const rows = q
-      ? state.initiatives.filter((i) => i.name.toLowerCase().includes(q))
-      : state.initiatives;
+      ? boardInitiatives.filter((i) => i.name.toLowerCase().includes(q))
+      : boardInitiatives;
     if (!sort) return rows;
     const sorted = [...rows].sort((a, b) => {
       const cmp =
@@ -71,15 +74,13 @@ export function InitiativesTab() {
       return sort.dir === "asc" ? cmp : -cmp;
     });
     return sorted;
-  }, [state.initiatives, search, sort]);
+  }, [boardInitiatives, search, sort]);
 
   return (
     <div className="initiatives-tab">
-      <ComponentsList />
-
       <section className="panel initiatives-panel">
         <header className="panel-head">
-          <h2>Initiatives</h2>
+          <h2>Board</h2>
           <input
             className="text-input search-input"
             type="search"
@@ -87,7 +88,7 @@ export function InitiativesTab() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <button className="btn push-right" onClick={addInitiative}>
+          <button className="btn push-right" onClick={() => addInitiative()}>
             + Add
           </button>
         </header>
@@ -102,7 +103,8 @@ export function InitiativesTab() {
                   </button>
                 </th>
                 <th className="col-initiative">Initiative</th>
-                <th className="col-components">Components</th>
+                <th className="col-category">Category</th>
+                <th className="col-scope">Scope</th>
                 <th className="col-readiness">Dev Readiness</th>
                 <th>Estimation (Sprints)</th>
                 <th>
@@ -156,17 +158,15 @@ export function InitiativesTab() {
                     </div>
                   </td>
 
-                  <td className="col-components">
-                    {state.components.map((c) => (
-                      <label key={c.id} className="check-row">
-                        <input
-                          type="checkbox"
-                          checked={!!i.checkedComponents[c.id]}
-                          onChange={() => toggleComponent(i.id, c.id)}
-                        />
-                        <span>{c.name}</span>
-                      </label>
-                    ))}
+                  <td className="col-category">
+                    <CategorySelect
+                      value={i.category}
+                      onChange={(category) => updateInitiative(i.id, { category })}
+                    />
+                  </td>
+
+                  <td className="col-scope">
+                    <ScopeCell initiative={i} />
                   </td>
 
                   <td className="col-readiness">

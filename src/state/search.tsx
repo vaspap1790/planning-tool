@@ -27,7 +27,7 @@ export function SearchProvider({
 }) {
   const [terms, setTerms] = useState({ initiatives: "", timeline: "" });
   // In Split view both panes are visible, so a filter typed in either applies to both.
-  const linked = view === "split";
+  const linked = view === "impl-split";
   const linkedRef = useRef(linked);
   linkedRef.current = linked;
 

@@ -73,6 +73,21 @@ export function timeLeftSprints(
   return Math.max(0, Math.min(estimationSprints, left));
 }
 
+/**
+ * Whole sprints in the inclusive date range [startISO, endISO], given sprint
+ * length in weeks. Returns 0 when the range or inputs are invalid.
+ */
+export function sprintsBetween(
+  startISO: string,
+  endISO: string,
+  sprintWeeks = DEFAULT_SPRINT_WEEKS
+): number {
+  if (!startISO || !endISO || sprintWeeks <= 0) return 0;
+  const days = diffDays(startISO, endISO) + 1; // inclusive
+  if (days <= 0) return 0;
+  return Math.round(days / (sprintWeeks * 7));
+}
+
 /** Red within one week of (or past) the target, yellow within two weeks. */
 export function warningLevel(targetISO: string, today = todayISO()): WarningLevel {
   const days = diffDays(today, targetISO);

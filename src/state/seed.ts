@@ -1,5 +1,50 @@
 // Initial demo data mirroring the source spreadsheets so the prototype looks familiar.
-import type { AppState } from "../types";
+import type { AppState, Initiative } from "../types";
+
+/** Stable ids for the default Planning platforms (Web / App / BFF / MAPI). */
+export const DEFAULT_PLATFORM_IDS = {
+  web: "pf-web",
+  app: "pf-app",
+  bff: "pf-bff",
+  mapi: "pf-mapi",
+} as const;
+
+/** Defaults for every field added after the original Initiative shape. */
+export function initiativeExtras(): Omit<
+  Initiative,
+  | "id"
+  | "name"
+  | "link"
+  | "priority"
+  | "estimationSprints"
+  | "devReadiness"
+  | "startDate"
+  | "checkedComponents"
+  | "targetDates"
+> {
+  return {
+    category: null,
+    stages: { sizing: false, planning: false, implementation: true },
+    okrIds: [],
+    lobIds: [],
+    natcoIds: [],
+    flowIds: [],
+    prdLink: "",
+    description: "",
+    tShirtSize: "",
+    status: "open",
+    outgoingDeps: [],
+    sizing: {
+      scope: 0,
+      technicalComplexity: 0,
+      dependencies: 0,
+      archImpact: 0,
+      risk: 0,
+      notes: "",
+    },
+    planningEffort: {},
+  };
+}
 
 export function seed(): AppState {
   const MAPI = "c-mapi";
@@ -40,6 +85,7 @@ export function seed(): AppState {
           ],
           [MMKC]: [{ id: "t3", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" }],
         },
+        ...initiativeExtras(),
       },
       {
         id: "i2",
@@ -66,6 +112,7 @@ export function seed(): AppState {
           [MAVI]: [{ id: "t4", date: "2026-08-27", releaseVersion: "16.5.0", env: "UAT" }],
           [MMKC]: [{ id: "t5", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" }],
         },
+        ...initiativeExtras(),
       },
       {
         id: "i3",
@@ -85,6 +132,7 @@ export function seed(): AppState {
           [MAVI]: [{ id: "t6", date: "2026-08-27", releaseVersion: "16.5.0", env: "UAT" }],
           [MMKC]: [{ id: "t7", date: "2026-08-29", releaseVersion: "18.2.0", env: "UAT" }],
         },
+        ...initiativeExtras(),
       },
     ],
     quarters: [
@@ -94,6 +142,21 @@ export function seed(): AppState {
     config: {
       sprintWeeks: 2,
       timelineStart: "current",
+      okrs: [],
+      lobs: [],
+      natcos: [],
+      flows: [],
+      platforms: [
+        { id: DEFAULT_PLATFORM_IDS.web, name: "Web" },
+        { id: DEFAULT_PLATFORM_IDS.app, name: "App" },
+        { id: DEFAULT_PLATFORM_IDS.bff, name: "BFF" },
+        { id: DEFAULT_PLATFORM_IDS.mapi, name: "MAPI" },
+      ],
+      planning: {
+        qStart: "",
+        qEnd: "",
+        capacity: {},
+      },
     },
   };
 }

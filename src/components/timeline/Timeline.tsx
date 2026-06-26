@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useApp } from "../../state/store";
+import { useApp, useBoardInitiatives } from "../../state/store";
 import { useSearch } from "../../state/search";
 import { TIMELINE_START_OPTIONS } from "../../lib/timelineStart";
 import {
@@ -28,6 +28,7 @@ interface Box {
 
 export function Timeline() {
   const { state, updateConfig } = useApp();
+  const boardInitiatives = useBoardInitiatives();
   const { sprintWeeks, timelineStart } = state.config;
   const [search, setSearch] = useSearch("timeline");
   const [selected, setSelected] = useState<TargetDateDetails | null>(null);
@@ -41,9 +42,9 @@ export function Timeline() {
   const initiatives = useMemo(() => {
     const q = search.trim().toLowerCase();
     return q
-      ? state.initiatives.filter((i) => i.name.toLowerCase().includes(q))
-      : state.initiatives;
-  }, [state.initiatives, search]);
+      ? boardInitiatives.filter((i) => i.name.toLowerCase().includes(q))
+      : boardInitiatives;
+  }, [boardInitiatives, search]);
 
   const openBox = (b: Box) =>
     setSelected({
@@ -168,7 +169,7 @@ export function Timeline() {
             const endCol = weekIndexForDate(timeline.weeks, lastDay);
             // Stable color per initiative regardless of any active filter.
             const color =
-              BAR_COLORS[state.initiatives.indexOf(i) % BAR_COLORS.length];
+              BAR_COLORS[boardInitiatives.indexOf(i) % BAR_COLORS.length];
 
             const boxes: Box[] = [];
             for (const [componentId, checked] of Object.entries(i.checkedComponents)) {

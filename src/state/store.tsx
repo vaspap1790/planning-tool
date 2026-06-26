@@ -18,11 +18,19 @@ import type {
   Dependency,
   ID,
   Initiative,
+  InitiativeCategory,
+  InitiativeStages,
+  NamedItem,
+  OutgoingDep,
+  PlatformCapacity,
+  PlanningConfig,
   Quarter,
   ReadinessItem,
+  Sizing,
   TargetDateEntry,
 } from "../types";
-import { localStore, newId, type Store } from "../lib/storage";
+import { localStore, newId, normalizeState, type Store } from "../lib/storage";
+import { initiativeExtras } from "./seed";
 import { DEFAULT_PRIORITY } from "../lib/priority";
 import { defaultDevReadiness } from "../lib/readiness";
 import { SUPABASE_ENABLED } from "../lib/supabase";
@@ -38,10 +46,27 @@ interface Actions {
   updateComponent(id: ID, patch: Partial<Component>): void;
   deleteComponent(id: ID): void;
   // Initiatives
-  addInitiative(): void;
+  addInitiative(
+    category?: InitiativeCategory | null,
+    stageOverride?: Partial<InitiativeStages>
+  ): void;
   updateInitiative(id: ID, patch: Partial<Initiative>): void;
   deleteInitiative(id: ID): void;
   toggleComponent(initiativeId: ID, componentId: ID): void;
+  // Lifecycle promotion (additive — flips a stage flag)
+  estimateSize(id: ID): void;
+  addToPlanning(id: ID): void;
+  addToImplementation(id: ID): void;
+  /** Set a single stage flag (e.g. remove an initiative from one tab). */
+  setStage(id: ID, stage: keyof InitiativeStages, value: boolean): void;
+  // Sizing
+  updateSizing(id: ID, patch: Partial<Sizing>): void;
+  // Outgoing dependencies
+  addOutgoingDep(initiativeId: ID): void;
+  updateOutgoingDep(initiativeId: ID, depId: ID, patch: Partial<OutgoingDep>): void;
+  deleteOutgoingDep(initiativeId: ID, depId: ID): void;
+  // Planning effort (per platform)
+  setPlanningEffort(initiativeId: ID, platformId: ID, sprints: number): void;
   updateReadiness(
     initiativeId: ID,
     key: "architecture" | "analytics" | "designs",
@@ -64,9 +89,19 @@ interface Actions {
   addQuarter(): void;
   updateQuarter(id: ID, patch: Partial<Quarter>): void;
   deleteQuarter(id: ID): void;
+  // Config: simple named lists (OKRs / LOBs / NatCos / Platforms)
+  addNamedItem(list: NamedList, name: string): void;
+  updateNamedItem(list: NamedList, id: ID, patch: Partial<NamedItem>): void;
+  deleteNamedItem(list: NamedList, id: ID): void;
+  // Config: Planning board setup
+  updatePlanningConfig(patch: Partial<PlanningConfig>): void;
+  updatePlanningCapacity(platformId: ID, patch: Partial<PlatformCapacity>): void;
   // Config
   updateConfig(patch: Partial<Config>): void;
 }
+
+/** The config keys holding a `NamedItem[]`. */
+export type NamedList = "okrs" | "lobs" | "natcos" | "flows" | "platforms";
 
 interface Ctx extends Actions {
   state: AppState;
@@ -97,9 +132,10 @@ export function AppProvider({
       const remote = await fetchRemoteState();
       if (!active) return;
       if (remote) {
-        lastSyncedJSON.current = JSON.stringify(remote);
+        const normalized = normalizeState(remote);
+        lastSyncedJSON.current = JSON.stringify(normalized);
         fromRemote.current = true;
-        setState(remote);
+        setState(normalized);
       } else {
         // First ever run: seed the shared row from current (local) state.
         await saveRemoteState(state);
@@ -109,11 +145,12 @@ export function AppProvider({
     })();
 
     const unsubscribe = subscribeRemoteState((next) => {
-      const json = JSON.stringify(next);
+      const normalized = normalizeState(next);
+      const json = JSON.stringify(normalized);
       if (json === lastSyncedJSON.current) return; // echo of our own write
       lastSyncedJSON.current = json;
       fromRemote.current = true;
-      setState(next);
+      setState(normalized);
     });
 
     return () => {
@@ -175,25 +212,86 @@ export function AppProvider({
           }),
         })),
 
-      addInitiative: () =>
-        setState((s) => ({
-          ...s,
-          initiatives: [
-            ...s.initiatives,
+      addInitiative: (category = null, stageOverride) =>
+        setState((s) => {
+          const extras = initiativeExtras();
+          // Explicit override (Sizing/Planning direct-add) wins; otherwise an
+          // Estimation-born initiative lives only in its category, and a plain
+          // direct add lands on the Board (extras' implementation: true).
+          const stages = stageOverride
+            ? { sizing: false, planning: false, implementation: false, ...stageOverride }
+            : category
+            ? { sizing: false, planning: false, implementation: false }
+            : extras.stages;
+          return {
+            ...s,
+            initiatives: [
+              ...s.initiatives,
+              {
+                ...extras,
+                id: newId(),
+                name: "New initiative",
+                link: "",
+                priority: DEFAULT_PRIORITY,
+                estimationSprints: 1,
+                devReadiness: defaultDevReadiness(),
+                startDate: new Date().toISOString().slice(0, 10),
+                checkedComponents: {},
+                targetDates: {},
+                category,
+                stages,
+              },
+            ],
+          };
+        }),
+      updateInitiative: (id, patch) => mapInitiative(id, (i) => ({ ...i, ...patch })),
+      estimateSize: (id) =>
+        mapInitiative(id, (i) => ({ ...i, stages: { ...i.stages, sizing: true } })),
+      addToPlanning: (id) =>
+        mapInitiative(id, (i) => ({ ...i, stages: { ...i.stages, planning: true } })),
+      setStage: (id, stage, value) =>
+        mapInitiative(id, (i) => ({ ...i, stages: { ...i.stages, [stage]: value } })),
+      addToImplementation: (id) =>
+        mapInitiative(id, (i) => ({
+          ...i,
+          stages: { ...i.stages, implementation: true },
+        })),
+      updateSizing: (id, patch) =>
+        mapInitiative(id, (i) => ({ ...i, sizing: { ...i.sizing, ...patch } })),
+      addOutgoingDep: (initiativeId) =>
+        mapInitiative(initiativeId, (i) => ({
+          ...i,
+          outgoingDeps: [
+            ...i.outgoingDeps,
             {
               id: newId(),
-              name: "New initiative",
-              link: "",
-              priority: DEFAULT_PRIORITY,
-              estimationSprints: 1,
-              devReadiness: defaultDevReadiness(),
-              startDate: new Date().toISOString().slice(0, 10),
-              checkedComponents: {},
-              targetDates: {},
+              raised: "",
+              raisedLink: "",
+              team: "",
+              handover: false,
+              committed: false,
+              eta: "",
+              note: "",
             },
           ],
         })),
-      updateInitiative: (id, patch) => mapInitiative(id, (i) => ({ ...i, ...patch })),
+      updateOutgoingDep: (initiativeId, depId, patch) =>
+        mapInitiative(initiativeId, (i) => ({
+          ...i,
+          outgoingDeps: i.outgoingDeps.map((d) =>
+            d.id === depId ? { ...d, ...patch } : d
+          ),
+        })),
+      deleteOutgoingDep: (initiativeId, depId) =>
+        mapInitiative(initiativeId, (i) => ({
+          ...i,
+          outgoingDeps: i.outgoingDeps.filter((d) => d.id !== depId),
+        })),
+      setPlanningEffort: (initiativeId, platformId, sprints) =>
+        mapInitiative(initiativeId, (i) => ({
+          ...i,
+          planningEffort: { ...i.planningEffort, [platformId]: sprints },
+        })),
       deleteInitiative: (id) =>
         setState((s) => ({
           ...s,
@@ -308,6 +406,69 @@ export function AppProvider({
       deleteQuarter: (id) =>
         setState((s) => ({ ...s, quarters: s.quarters.filter((q) => q.id !== id) })),
 
+      addNamedItem: (list, name) =>
+        setState((s) => ({
+          ...s,
+          config: { ...s.config, [list]: [...s.config[list], { id: newId(), name }] },
+        })),
+      updateNamedItem: (list, id, patch) =>
+        setState((s) => ({
+          ...s,
+          config: {
+            ...s.config,
+            [list]: s.config[list].map((it) => (it.id === id ? { ...it, ...patch } : it)),
+          },
+        })),
+      deleteNamedItem: (list, id) =>
+        setState((s) => {
+          const config: Config = {
+            ...s.config,
+            [list]: s.config[list].filter((it) => it.id !== id),
+          };
+          // Also drop the deleted item from the Planning capacity map.
+          if (list === "platforms") {
+            const { [id]: _drop, ...capacity } = s.config.planning.capacity;
+            config.planning = { ...s.config.planning, capacity };
+          }
+          // Strip references off every initiative.
+          const initiatives = s.initiatives.map((i) => {
+            if (list === "okrs") return { ...i, okrIds: i.okrIds.filter((x) => x !== id) };
+            if (list === "lobs") return { ...i, lobIds: i.lobIds.filter((x) => x !== id) };
+            if (list === "natcos")
+              return { ...i, natcoIds: i.natcoIds.filter((x) => x !== id) };
+            if (list === "flows")
+              return { ...i, flowIds: i.flowIds.filter((x) => x !== id) };
+            // platforms
+            const { [id]: _e, ...planningEffort } = i.planningEffort;
+            return { ...i, planningEffort };
+          });
+          return { ...s, config, initiatives };
+        }),
+      updatePlanningConfig: (patch) =>
+        setState((s) => ({
+          ...s,
+          config: { ...s.config, planning: { ...s.config.planning, ...patch } },
+        })),
+      updatePlanningCapacity: (platformId, patch) =>
+        setState((s) => {
+          const current = s.config.planning.capacity[platformId] ?? {
+            engineers: 0,
+            unavailable: 0,
+          };
+          return {
+            ...s,
+            config: {
+              ...s.config,
+              planning: {
+                ...s.config.planning,
+                capacity: {
+                  ...s.config.planning.capacity,
+                  [platformId]: { ...current, ...patch },
+                },
+              },
+            },
+          };
+        }),
       updateConfig: (patch) =>
         setState((s) => ({ ...s, config: { ...s.config, ...patch } })),
     }),
@@ -333,5 +494,43 @@ export function useActiveComponents(): Component[] {
         state.initiatives.some((i) => i.checkedComponents[c.id])
       ),
     [state.components, state.initiatives]
+  );
+}
+
+/** Initiatives whose Estimation home is `category` (Business / Engineering / …). */
+export function useInitiativesByCategory(
+  category: InitiativeCategory
+): Initiative[] {
+  const { state } = useApp();
+  return useMemo(
+    () => state.initiatives.filter((i) => i.category === category),
+    [state.initiatives, category]
+  );
+}
+
+/** Initiatives that have been promoted into the Sizing tab. */
+export function useSizingInitiatives(): Initiative[] {
+  const { state } = useApp();
+  return useMemo(
+    () => state.initiatives.filter((i) => i.stages.sizing),
+    [state.initiatives]
+  );
+}
+
+/** Initiatives that have been promoted into the Planning tab. */
+export function usePlanningInitiatives(): Initiative[] {
+  const { state } = useApp();
+  return useMemo(
+    () => state.initiatives.filter((i) => i.stages.planning),
+    [state.initiatives]
+  );
+}
+
+/** Initiatives on the Implementation Board (and feeding Timeline / Split). */
+export function useBoardInitiatives(): Initiative[] {
+  const { state } = useApp();
+  return useMemo(
+    () => state.initiatives.filter((i) => i.stages.implementation),
+    [state.initiatives]
   );
 }
