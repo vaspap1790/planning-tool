@@ -1,5 +1,5 @@
 // Estimation → Sizing. Five 1..5 dimensions drive a suggested T-shirt size.
-import { Fragment } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useApp, useSizingInitiatives } from "../../state/store";
 import type { Initiative, InitiativeCategory, SizingScore } from "../../types";
 import { TrashIcon } from "../ui/TrashIcon";
@@ -10,6 +10,10 @@ import { TShirtSelect } from "../common/TShirtSelect";
 import { useInitiativeDelete } from "../common/useInitiativeDelete";
 import { useAddInitiative } from "../common/useAddInitiative";
 import { SIZING_DIMENSIONS, suggestedTShirtSize, scoreClass } from "../../lib/sizing";
+import { PRIORITY_META } from "../../lib/priority";
+import { useSort, tShirtRank } from "../../lib/sort";
+
+type SortKey = "priority" | "suggested" | "tShirt";
 
 const GROUPS: { category: InitiativeCategory; label: string }[] = [
   { category: "business", label: "Business" },
@@ -47,6 +51,8 @@ export function SizingTab() {
   const rows = useSizingInitiatives();
   const requestDelete = useInitiativeDelete();
   const addInitiative = useAddInitiative();
+  const [search, setSearch] = useState("");
+  const { sort, toggleSort, sortArrow } = useSort<SortKey>();
 
   // "+ Add" here creates a sizing-stage initiative, after picking its category.
   const addSizingOnly = () => addInitiative({ sizing: true });
@@ -54,13 +60,39 @@ export function SizingTab() {
   const remove = (i: Initiative) =>
     requestDelete(i, "Sizing", () => setStage(i.id, "sizing", false));
 
+  // Filter by name (search), then optionally sort — applied before grouping so
+  // each category group keeps the chosen order. Display-only.
+  const displayed = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q ? rows.filter((i) => i.name.toLowerCase().includes(q)) : rows;
+    if (!sort) return filtered;
+    const sorted = [...filtered].sort((a, b) => {
+      let cmp = 0;
+      switch (sort.key) {
+        case "priority":
+          cmp = PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank;
+          break;
+        case "suggested":
+          cmp =
+            tShirtRank(suggestedTShirtSize(a.sizing)) -
+            tShirtRank(suggestedTShirtSize(b.sizing));
+          break;
+        case "tShirt":
+          cmp = tShirtRank(a.tShirtSize) - tShirtRank(b.tShirtSize);
+          break;
+      }
+      return sort.dir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [rows, search, sort]);
+
   const grouped = GROUPS.map((g) => ({
     ...g,
-    items: rows.filter((i) => i.category === g.category),
+    items: displayed.filter((i) => i.category === g.category),
   }));
   // Sizing initiatives without a known category (e.g. added directly here) fall
   // into an "Other" group so they aren't lost.
-  const other = rows.filter((i) => !GROUPS.some((g) => g.category === i.category));
+  const other = displayed.filter((i) => !GROUPS.some((g) => g.category === i.category));
 
   const colCount = SIZING_DIMENSIONS.length + 7;
 
@@ -128,6 +160,13 @@ export function SizingTab() {
       <section className="panel">
         <header className="panel-head">
           <h2>Sizing</h2>
+          <input
+            className="text-input search-input"
+            type="search"
+            placeholder="Search initiatives…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
           <button className="btn push-right" onClick={addSizingOnly}>
             + Add
           </button>
@@ -136,7 +175,11 @@ export function SizingTab() {
           <table className="grid">
             <thead>
               <tr>
-                <th className="col-priority">Priority</th>
+                <th className="col-priority">
+                  <button className="th-sort" onClick={() => toggleSort("priority")}>
+                    Priority{sortArrow("priority")}
+                  </button>
+                </th>
                 <th className="col-initiative">Initiative</th>
                 <th className="col-desc">Description</th>
                 <th className="col-scope">Scope</th>
@@ -145,8 +188,16 @@ export function SizingTab() {
                     {d.label}
                   </th>
                 ))}
-                <th className="col-tshirt">Suggested</th>
-                <th className="col-tshirt">T-Shirt</th>
+                <th className="col-tshirt">
+                  <button className="th-sort" onClick={() => toggleSort("suggested")}>
+                    Suggested{sortArrow("suggested")}
+                  </button>
+                </th>
+                <th className="col-tshirt">
+                  <button className="th-sort" onClick={() => toggleSort("tShirt")}>
+                    T-Shirt{sortArrow("tShirt")}
+                  </button>
+                </th>
                 <th className="col-actions" />
               </tr>
             </thead>

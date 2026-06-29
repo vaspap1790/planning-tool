@@ -121,6 +121,26 @@ export function pendingHandoverCount(
   return entry.handoverTo.filter((h) => !h.done).length;
 }
 
+/** A demo counts as scheduled only when both the flag and a date are set. */
+export function demoScheduled(
+  entry: Pick<TargetDateEntry, "demoScheduled" | "demoDate">
+): boolean {
+  return entry.demoScheduled && entry.demoDate.trim().length > 0;
+}
+
+/**
+ * Total pending-action count shown on a target-date badge: pending handovers
+ * plus one when no demo has been scheduled.
+ */
+export function pendingBadgeCount(
+  entry: Pick<
+    TargetDateEntry,
+    "handoverNeeded" | "handoverTo" | "demoScheduled" | "demoDate"
+  >
+): number {
+  return pendingHandoverCount(entry) + (demoScheduled(entry) ? 0 : 1);
+}
+
 // ---- Tab 2 timeline generation ---------------------------------------------
 
 export interface TimelineWeek {

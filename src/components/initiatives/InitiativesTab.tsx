@@ -1,8 +1,9 @@
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo } from "react";
 import { useApp, useBoardInitiatives } from "../../state/store";
 import { useSearch } from "../../state/search";
 import { timeLeftSprints } from "../../lib/dates";
 import { PRIORITY_META } from "../../lib/priority";
+import { useSort } from "../../lib/sort";
 import type { Initiative, InitiativeCategory } from "../../types";
 import { TargetDatesCell } from "./TargetDatesCell";
 import { DevReadinessCell } from "./DevReadinessCell";
@@ -12,11 +13,7 @@ import { useInitiativeDelete } from "../common/useInitiativeDelete";
 import { useAddInitiative } from "../common/useAddInitiative";
 import { TrashIcon } from "../ui/TrashIcon";
 
-type SortKey = "priority" | "startDate";
-interface Sort {
-  key: SortKey;
-  dir: "asc" | "desc";
-}
+type SortKey = "priority" | "startDate" | "estimation" | "timeLeft";
 
 const GROUPS: { category: InitiativeCategory; label: string }[] = [
   { category: "business", label: "Business" },
@@ -31,7 +28,7 @@ export function InitiativesTab() {
   const addInitiative = useAddInitiative();
   const boardInitiatives = useBoardInitiatives();
   const [search, setSearch] = useSearch("initiatives");
-  const [sort, setSort] = useState<Sort | null>(null);
+  const { sort, toggleSort, sortArrow } = useSort<SortKey>();
 
   // Clear the filter every time this tab is entered (tab switch / split toggle remount).
   useEffect(() => {
@@ -47,17 +44,6 @@ export function InitiativesTab() {
   const removeInitiative = (i: Initiative) =>
     requestDelete(i, "Board", () => setStage(i.id, "implementation", false));
 
-  const toggleSort = (key: SortKey) =>
-    setSort((s) =>
-      s?.key === key
-        ? s.dir === "asc"
-          ? { key, dir: "desc" }
-          : null // third click clears
-        : { key, dir: "asc" }
-    );
-  const sortArrow = (key: SortKey) =>
-    sort?.key === key ? (sort.dir === "asc" ? " ▲" : " ▼") : "";
-
   // Filter by name (search), then optionally sort. Display-only — the underlying
   // order in state (and the Timeline) is untouched.
   const displayed = useMemo(() => {
@@ -66,15 +52,29 @@ export function InitiativesTab() {
       ? boardInitiatives.filter((i) => i.name.toLowerCase().includes(q))
       : boardInitiatives;
     if (!sort) return rows;
+    const { sprintWeeks } = state.config;
     const sorted = [...rows].sort((a, b) => {
-      const cmp =
-        sort.key === "priority"
-          ? PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank
-          : a.startDate.localeCompare(b.startDate);
+      let cmp = 0;
+      switch (sort.key) {
+        case "priority":
+          cmp = PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank;
+          break;
+        case "startDate":
+          cmp = a.startDate.localeCompare(b.startDate);
+          break;
+        case "estimation":
+          cmp = a.estimationSprints - b.estimationSprints;
+          break;
+        case "timeLeft":
+          cmp =
+            timeLeftSprints(a.startDate, a.estimationSprints, sprintWeeks) -
+            timeLeftSprints(b.startDate, b.estimationSprints, sprintWeeks);
+          break;
+      }
       return sort.dir === "asc" ? cmp : -cmp;
     });
     return sorted;
-  }, [boardInitiatives, search, sort]);
+  }, [boardInitiatives, search, sort, state.config]);
 
   const grouped = GROUPS.map((g) => ({
     ...g,
@@ -214,13 +214,21 @@ export function InitiativesTab() {
                 <th className="col-initiative">Initiative</th>
                 <th className="col-scope">Scope</th>
                 <th className="col-readiness">Dev Readiness</th>
-                <th>Estimation (Sprints)</th>
+                <th>
+                  <button className="th-sort" onClick={() => toggleSort("estimation")}>
+                    Estimation (Sprints){sortArrow("estimation")}
+                  </button>
+                </th>
                 <th>
                   <button className="th-sort" onClick={() => toggleSort("startDate")}>
                     Start Date{sortArrow("startDate")}
                   </button>
                 </th>
-                <th>Time left (Sprints)</th>
+                <th>
+                  <button className="th-sort" onClick={() => toggleSort("timeLeft")}>
+                    Time left (Sprints){sortArrow("timeLeft")}
+                  </button>
+                </th>
                 <th className="col-target">Target Dates</th>
                 <th className="col-actions" />
               </tr>

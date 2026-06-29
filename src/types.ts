@@ -56,6 +56,12 @@ export interface TargetDateEntry {
   handoverNeeded: boolean;
   /** Teams to hand over to, each tracking whether the handover happened. */
   handoverTo: HandoverItem[];
+  /** Whether a demo has been scheduled for this target date. */
+  demoScheduled: boolean;
+  /** ISO yyyy-mm-dd date of the scheduled demo (empty when none). */
+  demoDate: string;
+  /** Whether the required approvals have been acquired (gates Resolve). */
+  approvalsAcquired: boolean;
   /** Marked done via the modal's Resolve action → renders green. */
   successful: boolean;
 }

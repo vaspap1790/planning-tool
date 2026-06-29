@@ -28,6 +28,9 @@ export function normalizeInitiative(raw: Partial<Initiative>): Initiative {
       handoverTo: (e.handoverTo ?? []).map((h) =>
         typeof h === "string" ? { name: h, done: false } : { name: h.name, done: !!h.done }
       ),
+      demoScheduled: e.demoScheduled ?? false,
+      demoDate: e.demoDate ?? "",
+      approvalsAcquired: e.approvalsAcquired ?? false,
       successful: e.successful ?? false,
     }));
   }

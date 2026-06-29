@@ -7,7 +7,7 @@ import {
   diffDays,
   formatDisplay,
   initiativeLastDay,
-  pendingHandoverCount,
+  pendingBadgeCount,
   targetEntryLevel,
   todayISO,
   weekIndexForDate,
@@ -28,7 +28,7 @@ interface Box {
   releaseVersion: string;
   env: string;
   successful: boolean;
-  pendingHandovers: number;
+  pendingActions: number;
 }
 
 interface Selected {
@@ -202,7 +202,7 @@ export function Timeline() {
                   releaseVersion: e.releaseVersion,
                   env: e.env,
                   successful: e.successful,
-                  pendingHandovers: pendingHandoverCount(e),
+                  pendingActions: pendingBadgeCount(e),
                 });
               }
             }
@@ -280,13 +280,13 @@ export function Timeline() {
                         <span>{formatDisplay(b.date)}</span>
                         {b.releaseVersion && <span>v{b.releaseVersion}</span>}
                         {b.env && <span className="tl-env">{b.env}</span>}
-                        {b.pendingHandovers > 0 && (
+                        {b.pendingActions > 0 && (
                           <span
                             className="td-badge"
-                            title={`${b.pendingHandovers} handover(s) pending`}
-                            aria-label={`${b.pendingHandovers} handovers pending`}
+                            title={`${b.pendingActions} pending action(s)`}
+                            aria-label={`${b.pendingActions} pending actions`}
                           >
-                            {b.pendingHandovers}
+                            {b.pendingActions}
                           </span>
                         )}
                       </div>

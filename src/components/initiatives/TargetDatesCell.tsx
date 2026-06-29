@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ID } from "../../types";
 import { useApp } from "../../state/store";
-import { formatDisplay, pendingHandoverCount, targetEntryLevel } from "../../lib/dates";
+import { formatDisplay, pendingBadgeCount, targetEntryLevel } from "../../lib/dates";
 import { newId } from "../../lib/storage";
 import { useConfirm } from "../ui/ConfirmDialog";
 import { TargetDateModal } from "../timeline/TargetDateModal";
@@ -65,13 +65,13 @@ export function TargetDatesCell({ initiativeId, componentId }: Props) {
           <strong>{formatDisplay(e.date)}</strong>
           {e.releaseVersion && <span>v{e.releaseVersion}</span>}
           {e.env && <span className="td-env">{e.env}</span>}
-          {pendingHandoverCount(e) > 0 && (
+          {pendingBadgeCount(e) > 0 && (
             <span
               className="td-badge"
-              title={`${pendingHandoverCount(e)} handover(s) pending`}
-              aria-label={`${pendingHandoverCount(e)} handovers pending`}
+              title={`${pendingBadgeCount(e)} pending action(s)`}
+              aria-label={`${pendingBadgeCount(e)} pending actions`}
             >
-              {pendingHandoverCount(e)}
+              {pendingBadgeCount(e)}
             </span>
           )}
         </div>

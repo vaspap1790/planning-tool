@@ -1,5 +1,5 @@
 // Estimation → Dependencies, with an Incoming / Outgoing segmented switch.
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useApp, useInitiativesByCategory } from "../../state/store";
 import type { Initiative } from "../../types";
 import { TrashIcon } from "../ui/TrashIcon";
@@ -9,6 +9,8 @@ import { ScopeCell } from "../common/ScopeCell";
 import { TShirtSelect } from "../common/TShirtSelect";
 import { StatusSelect } from "../common/StatusSelect";
 import { useInitiativeDelete } from "../common/useInitiativeDelete";
+import { PRIORITY_META } from "../../lib/priority";
+import { useSort, tShirtRank, statusRank } from "../../lib/sort";
 
 type Sub = "incoming" | "outgoing";
 
@@ -35,20 +37,53 @@ export function DependenciesTab() {
   );
 }
 
+type IncomingSortKey = "priority" | "tShirt" | "status";
+
 function IncomingTable() {
   const { addInitiative, updateInitiative, estimateSize } = useApp();
   const rows = useInitiativesByCategory("incoming");
   const requestDelete = useInitiativeDelete();
+  const [search, setSearch] = useState("");
+  const { sort, toggleSort, sortArrow } = useSort<IncomingSortKey>();
 
   const remove = (i: Initiative) =>
     requestDelete(i, "Incoming Dependencies", () =>
       updateInitiative(i.id, { category: null })
     );
 
+  const displayed = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q ? rows.filter((i) => i.name.toLowerCase().includes(q)) : rows;
+    if (!sort) return filtered;
+    const sorted = [...filtered].sort((a, b) => {
+      let cmp = 0;
+      switch (sort.key) {
+        case "priority":
+          cmp = PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank;
+          break;
+        case "tShirt":
+          cmp = tShirtRank(a.tShirtSize) - tShirtRank(b.tShirtSize);
+          break;
+        case "status":
+          cmp = statusRank(a.status) - statusRank(b.status);
+          break;
+      }
+      return sort.dir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [rows, search, sort]);
+
   return (
     <section className="panel">
       <header className="panel-head">
         <h2>Incoming Dependencies</h2>
+        <input
+          className="text-input search-input"
+          type="search"
+          placeholder="Search initiatives…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <button className="btn push-right" onClick={() => addInitiative("incoming")}>
           + Add
         </button>
@@ -57,17 +92,29 @@ function IncomingTable() {
         <table className="grid">
           <thead>
             <tr>
-              <th className="col-priority">Priority</th>
+              <th className="col-priority">
+                <button className="th-sort" onClick={() => toggleSort("priority")}>
+                  Priority{sortArrow("priority")}
+                </button>
+              </th>
               <th className="col-initiative">Initiative</th>
               <th className="col-desc">Description</th>
               <th className="col-scope">Scope</th>
-              <th className="col-tshirt">T-Shirt</th>
-              <th className="col-status">Status</th>
+              <th className="col-tshirt">
+                <button className="th-sort" onClick={() => toggleSort("tShirt")}>
+                  T-Shirt{sortArrow("tShirt")}
+                </button>
+              </th>
+              <th className="col-status">
+                <button className="th-sort" onClick={() => toggleSort("status")}>
+                  Status{sortArrow("status")}
+                </button>
+              </th>
               <th className="col-actions" />
             </tr>
           </thead>
           <tbody>
-            {rows.map((i) => (
+            {displayed.map((i) => (
               <tr key={i.id}>
                 <td className="col-priority center">
                   <PrioritySelect
@@ -118,7 +165,7 @@ function IncomingTable() {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 && (
+            {displayed.length === 0 && (
               <tr>
                 <td className="empty-row muted" colSpan={7}>
                   No incoming dependencies yet.
@@ -143,16 +190,36 @@ function OutgoingTable() {
   } = useApp();
   const rows = useInitiativesByCategory("outgoing");
   const requestDelete = useInitiativeDelete();
+  const [search, setSearch] = useState("");
+  const { sort, toggleSort, sortArrow } = useSort<"priority">();
 
   const remove = (i: Initiative) =>
     requestDelete(i, "Outgoing Dependencies", () =>
       updateInitiative(i.id, { category: null })
     );
 
+  const displayed = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = q ? rows.filter((i) => i.name.toLowerCase().includes(q)) : rows;
+    if (!sort) return filtered;
+    const sorted = [...filtered].sort((a, b) => {
+      const cmp = PRIORITY_META[a.priority].rank - PRIORITY_META[b.priority].rank;
+      return sort.dir === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [rows, search, sort]);
+
   return (
     <section className="panel">
       <header className="panel-head">
         <h2>Outgoing Dependencies</h2>
+        <input
+          className="text-input search-input"
+          type="search"
+          placeholder="Search initiatives…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
         <button className="btn push-right" onClick={() => addInitiative("outgoing")}>
           + Add
         </button>
@@ -161,7 +228,11 @@ function OutgoingTable() {
         <table className="grid">
           <thead>
             <tr>
-              <th className="col-priority">Priority</th>
+              <th className="col-priority">
+                <button className="th-sort" onClick={() => toggleSort("priority")}>
+                  Priority{sortArrow("priority")}
+                </button>
+              </th>
               <th className="col-initiative">Initiative</th>
               <th className="col-desc">Description</th>
               <th className="col-outgoing">Dependencies</th>
@@ -169,7 +240,7 @@ function OutgoingTable() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((i) => (
+            {displayed.map((i) => (
               <tr key={i.id}>
                 <td className="col-priority center">
                   <PrioritySelect
@@ -316,7 +387,7 @@ function OutgoingTable() {
                 </td>
               </tr>
             ))}
-            {rows.length === 0 && (
+            {displayed.length === 0 && (
               <tr>
                 <td className="empty-row muted" colSpan={5}>
                   No outgoing dependencies yet.

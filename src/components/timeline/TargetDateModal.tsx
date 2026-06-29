@@ -27,7 +27,8 @@ export function TargetDateModal({ initiativeId, componentId, entryId, onClose }:
 
   const releaseCalendarLink = component?.releaseCalendarLink ?? "";
   const hasCalendar = releaseCalendarLink.trim().length > 0;
-  const canResolve = !entry.successful && targetReached(entry.date);
+  const canResolve =
+    !entry.successful && targetReached(entry.date) && entry.approvalsAcquired;
 
   const addTeam = () => {
     const name = teamDraft.trim();
@@ -165,6 +166,53 @@ export function TargetDateModal({ initiativeId, componentId, entryId, onClose }:
               </div>
             </div>
           )}
+
+          <div className="entry-field td-span">
+            <span>Demo scheduled</span>
+            <div className="segmented">
+              <button
+                className={`seg ${entry.demoScheduled ? "active" : ""}`}
+                onClick={() => patch({ demoScheduled: true })}
+              >
+                Yes
+              </button>
+              <button
+                className={`seg ${!entry.demoScheduled ? "active" : ""}`}
+                onClick={() => patch({ demoScheduled: false })}
+              >
+                No
+              </button>
+            </div>
+          </div>
+
+          {entry.demoScheduled && (
+            <label className="entry-field td-span">
+              <span>Demo date</span>
+              <input
+                type="date"
+                value={entry.demoDate}
+                onChange={(e) => patch({ demoDate: e.target.value })}
+              />
+            </label>
+          )}
+
+          <div className="entry-field td-span">
+            <span>Approvals acquired</span>
+            <div className="segmented">
+              <button
+                className={`seg ${entry.approvalsAcquired ? "active" : ""}`}
+                onClick={() => patch({ approvalsAcquired: true })}
+              >
+                Yes
+              </button>
+              <button
+                className={`seg ${!entry.approvalsAcquired ? "active" : ""}`}
+                onClick={() => patch({ approvalsAcquired: false })}
+              >
+                No
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="modal-actions">
@@ -189,7 +237,9 @@ export function TargetDateModal({ initiativeId, componentId, entryId, onClose }:
               title={
                 canResolve
                   ? "Mark this target date as successfully met"
-                  : "Available once the target date is reached"
+                  : !entry.approvalsAcquired
+                    ? "Available once approvals are acquired"
+                    : "Available once the target date is reached"
               }
             >
               Resolve

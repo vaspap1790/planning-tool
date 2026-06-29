@@ -5,7 +5,16 @@ import type { AppState, Initiative, TargetDateEntry } from "../types";
 function td(
   e: Pick<TargetDateEntry, "id" | "date" | "releaseVersion" | "env">
 ): TargetDateEntry {
-  return { mergeLink: "", handoverNeeded: false, handoverTo: [], successful: false, ...e };
+  return {
+    mergeLink: "",
+    handoverNeeded: false,
+    handoverTo: [],
+    demoScheduled: false,
+    demoDate: "",
+    approvalsAcquired: false,
+    successful: false,
+    ...e,
+  };
 }
 
 /** Stable ids for the default Planning platforms (Web / App / BFF / MAPI). */
