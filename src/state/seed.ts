@@ -9,7 +9,7 @@ function td(
     mergeLink: "",
     handoverNeeded: false,
     handoverTo: [],
-    demoScheduled: false,
+    demoRequired: false,
     demoDate: "",
     approvalsAcquired: false,
     successful: false,

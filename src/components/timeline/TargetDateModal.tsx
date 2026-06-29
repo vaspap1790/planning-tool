@@ -4,7 +4,7 @@
 import { useState } from "react";
 import type { ID } from "../../types";
 import { useApp } from "../../state/store";
-import { targetReached } from "../../lib/dates";
+import { targetReached, demoPending, pendingHandoverCount } from "../../lib/dates";
 
 interface Props {
   initiativeId: ID;
@@ -29,6 +29,11 @@ export function TargetDateModal({ initiativeId, componentId, entryId, onClose }:
   const hasCalendar = releaseCalendarLink.trim().length > 0;
   const canResolve =
     !entry.successful && targetReached(entry.date) && entry.approvalsAcquired;
+
+  // Outstanding actions behind the badge count — one combined message per kind.
+  const actionsNeeded: string[] = [];
+  if (demoPending(entry)) actionsNeeded.push("Demo needs to be scheduled.");
+  if (pendingHandoverCount(entry) > 0) actionsNeeded.push("Handovers are not conducted.");
 
   const addTeam = () => {
     const name = teamDraft.trim();
@@ -60,6 +65,14 @@ export function TargetDateModal({ initiativeId, componentId, entryId, onClose }:
           </span>
         </h3>
         <p className="modal-sub muted">{initiative.name}</p>
+
+        {actionsNeeded.length > 0 && (
+          <ul className="td-actions-needed">
+            {actionsNeeded.map((msg) => (
+              <li key={msg}>{msg}</li>
+            ))}
+          </ul>
+        )}
 
         <div className="td-form">
           <label className="entry-field">
@@ -168,24 +181,24 @@ export function TargetDateModal({ initiativeId, componentId, entryId, onClose }:
           )}
 
           <div className="entry-field td-span">
-            <span>Demo scheduled</span>
+            <span>Demo required</span>
             <div className="segmented">
               <button
-                className={`seg ${entry.demoScheduled ? "active" : ""}`}
-                onClick={() => patch({ demoScheduled: true })}
+                className={`seg ${entry.demoRequired ? "active" : ""}`}
+                onClick={() => patch({ demoRequired: true })}
               >
                 Yes
               </button>
               <button
-                className={`seg ${!entry.demoScheduled ? "active" : ""}`}
-                onClick={() => patch({ demoScheduled: false })}
+                className={`seg ${!entry.demoRequired ? "active" : ""}`}
+                onClick={() => patch({ demoRequired: false })}
               >
                 No
               </button>
             </div>
           </div>
 
-          {entry.demoScheduled && (
+          {entry.demoRequired && (
             <label className="entry-field td-span">
               <span>Demo date</span>
               <input

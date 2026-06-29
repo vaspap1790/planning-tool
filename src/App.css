@@ -1224,6 +1224,19 @@
   margin: -6px 0 14px;
   font-size: 13px;
 }
+.td-actions-needed {
+  margin: 0 0 14px;
+  padding: 10px 12px 10px 28px;
+  list-style: disc;
+  border-radius: 8px;
+  background: var(--warn-red-bg);
+  color: var(--warn-red);
+  font-size: 13px;
+  font-weight: 600;
+}
+.td-actions-needed li + li {
+  margin-top: 4px;
+}
 .td-status {
   margin-left: 10px;
   padding: 2px 9px;

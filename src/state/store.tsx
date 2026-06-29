@@ -366,7 +366,7 @@ export function AppProvider({
                 mergeLink: "",
                 handoverNeeded: false,
                 handoverTo: [],
-                demoScheduled: false,
+                demoRequired: false,
                 demoDate: "",
                 approvalsAcquired: false,
                 successful: false,
